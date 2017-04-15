@@ -5,33 +5,6 @@ from PyQt5.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGL
 from PyQt5 import QtCore
 
 
-class Drawable(object):
-    """This represents something that can be rendered by OpenGL."""
-
-    def __init__(self, points=None, vertices=None, colours=None, normals=None):
-        """Initialise this drawable.
-
-        :param list[tuple] points: a list of points representing the object
-        :param list[float] vertices: a list of raw vertices (3 to a point)
-        :param list[float] colours: a raw list of colours for each point
-        :param normals: a list of normals for each point
-        """
-        self.points = points
-        self._vertices = vertices
-        if not colours and self.vertices:
-            colours = array.array('f', [1.0] * len(self.vertices))
-        self.colours = colours
-        self.normals = normals
-
-    @property
-    def vertices(self):
-        """Get a list of raw indecies for this object."""
-        if self._vertices:
-            return self._vertices
-        if self.points:
-            return array.array('f', [coord for point in self.points for coord in point])
-
-
 class OGLCanvas(QOpenGLWidget):
     """A class to handle displaying OpenGL things on the screen."""
 

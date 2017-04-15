@@ -1,14 +1,37 @@
+from collections import OrderedDict
+from path import Path
+
+
 class MeshData(object):
-    def __init__(self, name=None, vertices=None, indices=None, normals=None, raw_vertices=None):
+    VERTEX_FORMAT = OrderedDict((
+        ('v_pos', (0, 3)),
+        ('v_normal', (3, 3)),
+        ('v_tc0', (6, 2)),
+    ))
+    """A mapping of attributes to their positions in each point"""
+    VERTEX_LEN = sum(i[1] for i in VERTEX_FORMAT.values())
+    """The total amount of floats per point."""
+
+    def __init__(self, name=None, points=None, indices=None):
         self.name = name
         self.vertex_format = [
             (b'v_pos', 3, 'float'),
             (b'v_normal', 3, 'float'),
             (b'v_tc0', 2, 'float')]
-        self.vertices = vertices or []
+        self.points = points or []
         self.indices = indices or []
-        self.normals = normals or []
-        self.raw_vertices = raw_vertices or []
+
+    @property
+    def vertices(self):
+        """Return a flattend list of all vertices."""
+        offset, length = self.VERTEX_FORMAT['v_pos']
+        return [v for point in self.points for v in point[offset:offset + length]]
+
+    @property
+    def normals(self):
+        """Return a flattend list of all normals."""
+        offset, length = self.VERTEX_FORMAT['v_normal']
+        return [v for point in self.points for v in point[offset:offset + length]]
 
     def calculate_normals(self):
         for i in range(len(self.indices) / (3)):
@@ -51,10 +74,16 @@ def default_list(items, num, default=None):
 class OBJReader(object):
     """Parse an *.obj file."""
 
-    def __init__(self, filename):
-        """Initialise the object with data from the given file."""
-        self.filename = filename
-        self.load_file(filename)
+    def __init__(self, filename, file_path=None):
+        """Initialise the object with data from the given file
+
+        :param str/Path filename: the name of the file to be loaded
+        :param str/Path file_path: an optional path to the file. If None, the default models dir will be used."""
+        if not file_path:
+            file_path = Path(__file__).parent / 'models'
+
+        self.filename = Path(file_path) / filename
+        self.load_file(self.filename)
 
     def _clear_lists(self):
         """Clear all data buffors."""
@@ -131,11 +160,8 @@ class OBJReader(object):
 
         mesh = MeshData(
             name=name,
-            raw_vertices=[vertice for points in faces for v, t, n in points for vertice in values(vertices, v)],
-            normals=[norm for points in faces for v, t, n in points for norm in values(normals, n)],
-            vertices=[
-                vertice for points in faces for v, t, n in points
-                for vertice in values(vertices, v) + values(normals, n) + values(tex_coords, t, 2)
+            points=[
+                values(vertices, v) + values(normals, n) + values(tex_coords, t, 2) for points in faces for v, t, n in points
             ],
             indices=list(range(len(faces) * 3))
         )
