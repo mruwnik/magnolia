@@ -138,7 +138,7 @@ class OBJReader(object):
 
         This means a new object, so start off by adding the previously processed object to the list of objects.
         """
-        obj = self.add_mesh(self._object_name, self.vertices, self.tex_coords, self.normals, self.faces)
+        self.add_mesh(self._object_name, self.vertices, self.tex_coords, self.normals, self.faces)
         self._clear_lists()
         self._object_name = ' '.join(line) or None
 
@@ -161,7 +161,8 @@ class OBJReader(object):
         mesh = MeshData(
             name=name,
             points=[
-                values(vertices, v) + values(normals, n) + values(tex_coords, t, 2) for points in faces for v, t, n in points
+                values(vertices, v) + values(normals, n) + values(tex_coords, t, 2)
+                for points in faces for v, t, n in points
             ],
             indices=list(range(len(faces) * 3))
         )

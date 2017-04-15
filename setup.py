@@ -26,6 +26,6 @@ setup(
             'magnolia = tests.pytest_plugin',
         ],
         # this is totally incorrect, but it's just as a reminder of how it's done
-        #'forms': ['pyuic5 ui/mainwindow.ui > ui/forms.py']
+        # 'forms': ['pyuic5 ui/mainwindow.ui > ui/forms.py']
     },
 )

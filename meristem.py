@@ -1,4 +1,3 @@
-import array
 import math
 
 from ui import MultiDrawable, MeshDrawable, OBJReader

@@ -84,7 +84,7 @@ class MultiDrawable(object):
         """
         values = array.array('f', [])
         for obj in self.objects:
-            values += getattr(obj,field)
+            values += getattr(obj, field)
         return values
 
     def calculate_lists(self):

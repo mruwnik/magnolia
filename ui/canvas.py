@@ -58,7 +58,8 @@ class OGLCanvas(QOpenGLWidget):
     def mv_matrix(self):
         """Return the current model-view matrix."""
         matrix = QMatrix4x4()
-        matrix.lookAt(QVector3D(0, 0, -math.sqrt(self.width() * self.height())/50.0), QVector3D(0, 4, 0), QVector3D(0, 1, 0))
+        matrix.lookAt(
+            QVector3D(0, 0, -math.sqrt(self.width() * self.height())/50.0), QVector3D(0, 4, 0), QVector3D(0, 1, 0))
         matrix.rotate(self.viewing_angle[0], 0, 1, 0)
         matrix.rotate(self.viewing_angle[1], 0, 0, 1)
         # matrix.translate(0, -5, 0)
