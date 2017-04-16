@@ -24,8 +24,19 @@ class Drawable(object):
             colours = array.array('f', [1.0] * len(self.vertices))
         self.colours = colours
 
+    def ray_pick_test(self, origin, direction):
+        """Return the distance from the given point to its nearest point on this object.
 
-class MeshDrawable(object):
+        Negative values mean that there was no intersection.
+        """
+        return -1
+
+    def select(self):
+        """Select this object"""
+        pass
+
+
+class MeshDrawable(Drawable):
     """A container for a model mesh."""
 
     def __init__(self, mesh, offset=None, scale=1, fill_colour=None):
@@ -70,6 +81,7 @@ class MultiDrawable(object):
     def __init__(self, objects=None):
         """Initialise the collection with a list of objects."""
         self.objects = objects or []
+        self.selected = []
         self.calculate_lists()
 
     def add(self, *items):
@@ -96,3 +108,23 @@ class MultiDrawable(object):
         self.vertices = self.concat('vertices')
         self.normals = self.concat('normals')
         self.colours = self.concat('colours')
+        self.points_count = len(self.vertices) / 3
+
+    def ray_pick_test(self, origin, direction):
+        """Return the distance from the given point to its nearest point on this object.
+
+        Negative values mean that there was no intersection.
+        By default this returns the distance to the nearest object in the whole container.
+        """
+        smallest_dist, self.selected = -1, None
+        for obj in self.objects:
+            dist = obj.ray_pick_test(origin, direction)
+            if dist > 0 and (dist < smallest_dist or smallest_dist < 0):
+                smallest_dist, self.selected = dist, obj
+        return smallest_dist
+
+    def select(self):
+        """Select this container - if a single object was selected with the mouse, then select that."""
+        if self.selected:
+            self.selected.select()
+            self.colours = self.concat('colours')

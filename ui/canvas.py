@@ -1,9 +1,10 @@
-import array
 import math
 
 from PyQt5.QtWidgets import QOpenGLWidget
 from PyQt5.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGLVersionProfile, QVector3D
 from PyQt5 import QtCore
+
+from ui.drawables import MultiDrawable
 
 
 class OGLCanvas(QOpenGLWidget):
@@ -14,7 +15,7 @@ class OGLCanvas(QOpenGLWidget):
     def __init__(self, *args, **kwargs):
         """Initialise a new object."""
         super(OGLCanvas, self).__init__(*args, **kwargs)
-        self.objects = []
+        self.objects = MultiDrawable([])
         self.viewing_angle = [0.0, 0.0]
 
         # TODO: These are temp variables used for debugging purposes
@@ -52,7 +53,7 @@ class OGLCanvas(QOpenGLWidget):
 
     def add(self, drawable):
         """Add the provided drawable to the list of objects."""
-        self.objects.append(drawable)
+        self.objects.add(drawable)
 
     @property
     def viewport_proportions(self):
@@ -118,19 +119,11 @@ class OGLCanvas(QOpenGLWidget):
         self.program.setUniformValue(self.norm_matrixUniform, self.mv_matrix.inverted()[0])
         self.program.setUniformValue(self.p_matrixUniform, self.p_matrix)
 
-        vertices = array.array('f', [])
-        colours = array.array('f', [])
-        normals = array.array('f', [])
-        for obj in self.objects + self.click_pos:
-            vertices += obj.vertices
-            colours += obj.colours
-            normals += obj.normals
+        self.loadAttrArray(self.m_posAttr, self.objects.vertices)
+        self.loadAttrArray(self.m_colAttr, self.objects.colours)
+        self.loadAttrArray(self.m_normAttr, self.objects.normals)
 
-        self.loadAttrArray(self.m_posAttr, vertices)
-        self.loadAttrArray(self.m_colAttr, colours)
-        self.loadAttrArray(self.m_normAttr, normals)
-
-        self.gl.glDrawArrays(self.gl.GL_TRIANGLES, 0, len(vertices) / 3)
+        self.gl.glDrawArrays(self.gl.GL_TRIANGLES, 0, self.objects.points_count)
 
         # TODO: Debugging lines to check ray picking
         if self.line_points:
@@ -166,18 +159,23 @@ class OGLCanvas(QOpenGLWidget):
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
-            ray = self.rayPick(event)
-            self.draw_pick_ray(ray)
+            origin, direction = self.rayPick(event)
+            self.draw_pick_ray(origin, direction)
+
+            if self.objects.ray_pick_test(origin, direction) > 0:
+                self.objects.select()
         super(OGLCanvas, self).mousePressEvent(event)
 
-    def draw_pick_ray(self, ray_func):
+    def draw_pick_ray(self, origin, direction):
         """Draw a line along the provided ray function, along with a marker for the eye and picked point."""
-        eye_pos = ray_func(0)
-        pos = ray_func(0.1)
+        def ray_func(p):
+            """Return points along the picking ray"""
+            return origin + p * direction
+
         self.line_points = []
-        l_prev = ray_func(600)
+        l_prev = ray_func(220)
         for i in range(10):
-            line = ray_func(500 - i * 100)
+            line = ray_func(i * 20)
             self.line_points += [
                 line.x(), line.y(), line.z(), l_prev.x(), l_prev.y(), l_prev.z()]
             l_prev = line
@@ -185,8 +183,8 @@ class OGLCanvas(QOpenGLWidget):
         from ui import MeshDrawable
         from meristem import Bud
         self.click_pos = [
-            MeshDrawable(Bud.SPHERE_MODEL, offset=eye_pos, scale=0.5, fill_colour=[0, 1, 0]),
-            MeshDrawable(Bud.SPHERE_MODEL, offset=pos, scale=0.5, fill_colour=[0, 0, 1]),
+            MeshDrawable(Bud.SPHERE_MODEL, offset=origin, scale=0.5, fill_colour=[0, 1, 0]),
+            MeshDrawable(Bud.SPHERE_MODEL, offset=ray_func(0.1), scale=0.5, fill_colour=[0, 0, 1]),
         ]
         return
 
@@ -216,5 +214,5 @@ class OGLCanvas(QOpenGLWidget):
         # work out where the camera is in model space
         eye_pos = (self.mv_matrix.inverted()[0] * camera_pos.toVector4D()).toVector3D()
 
-        # Return points along the picking ray
-        return lambda p: pos + p * (eye_pos - pos)
+        # Return the origin and direction of the picking ray
+        return eye_pos, (pos - eye_pos).normalized()

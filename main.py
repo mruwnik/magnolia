@@ -62,6 +62,7 @@ class Prog(QMainWindow):
 
         buds = big_buds + small_buds + medium_buds
         meristem.add(*buds)
+
         self.ui.mainCanvas.add(meristem)
 
         timer = QTimer(self)
