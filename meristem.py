@@ -54,8 +54,7 @@ class Bud(MeshDrawable):
 
     def select(self):
         """Select this bud."""
-        import array
-        self.colours = array.array('f', [1, 1, 1] * int(len(self.vertices)/3))
+        return self
 
     def ray_pick_test(self, origin, direction):
         """Check whether the given ray intersects this object.

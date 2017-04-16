@@ -25,7 +25,7 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0">
       <property name="sizeConstraint">
        <enum>QLayout::SetNoConstraint</enum>
       </property>
@@ -46,10 +46,43 @@
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="optionsContainer" stretch="0,0">
+       <widget class="QSlider" name="zoom">
+        <property name="minimum">
+         <number>-10</number>
+        </property>
+        <property name="maximum">
+         <number>89</number>
+        </property>
+        <property name="value">
+         <number>10</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="optionsContainer" stretch="0,0,0,0">
         <property name="sizeConstraint">
          <enum>QLayout::SetMinimumSize</enum>
         </property>
+        <item>
+         <widget class="QRadioButton" name="mode_movement">
+          <property name="text">
+           <string>Ruch</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="mode_selection">
+          <property name="text">
+           <string>Wybieranie</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QPushButton" name="pushButton_2">
           <property name="text">
@@ -96,8 +129,62 @@
    <class>OGLCanvas</class>
    <extends>QOpenGLWidget</extends>
    <header location="global">ui/canvas.h</header>
+   <slots>
+    <slot>allowMovement()</slot>
+    <slot>allowSelection()</slot>
+    <slot>setZoom()</slot>
+   </slots>
   </customwidget>
  </customwidgets>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>mode_movement</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mainCanvas</receiver>
+   <slot>allowMovement()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>660</x>
+     <y>114</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>241</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mode_selection</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>mainCanvas</receiver>
+   <slot>allowSelection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>660</x>
+     <y>196</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>306</x>
+     <y>241</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>zoom</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>mainCanvas</receiver>
+   <slot>setZoom()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>595</x>
+     <y>241</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>295</x>
+     <y>241</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

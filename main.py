@@ -1,3 +1,5 @@
+import array
+
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QApplication, QMainWindow
 
@@ -64,10 +66,18 @@ class Prog(QMainWindow):
         meristem.add(*buds)
 
         self.ui.mainCanvas.add(meristem)
+        self.ui.mainCanvas.drawable_selected.connect(self.bud_selected)
 
         timer = QTimer(self)
         timer.timeout.connect(self.ui.mainCanvas.update)
         timer.start(20)
+
+    def bud_selected(self, bud):
+        """Handle a bud being selected. This just turns it white, coz why not?"""
+        if not bud:
+            return
+        bud.colours = array.array('f', [1, 1, 1] * int(len(bud.vertices)/3))
+        bud.needsRefresh.emit('colours')
 
 
 def main():

@@ -4,23 +4,26 @@ from PyQt5.QtWidgets import QOpenGLWidget
 from PyQt5.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGLVersionProfile, QVector3D
 from PyQt5 import QtCore
 
-from ui.drawables import MultiDrawable
+from ui.drawables import MultiDrawable, Drawable
 
 
 class OGLCanvas(QOpenGLWidget):
     """A class to handle displaying OpenGL things on the screen."""
-    PERSPECTIVE = (60, 0.1, 100.0)
+    PERSPECTIVE = (60, 0.1, 120.0)
     """The perspective matrix settings (angle, nearZ, farZ)"""
+
+    drawable_selected = QtCore.pyqtSignal(Drawable, name="drawableSelected")
 
     def __init__(self, *args, **kwargs):
         """Initialise a new object."""
         super(OGLCanvas, self).__init__(*args, **kwargs)
         self.objects = MultiDrawable([])
         self.viewing_angle = [0.0, 0.0]
+        self.zoom = 10
 
-        # TODO: These are temp variables used for debugging purposes
-        self.line_points = None
-        self.click_pos = []
+        # set default settings
+        self.can_move_camera = True
+        self.can_select = False
 
     def _load_program(self, vertex_shader, fragment_shader):
         """Load the given shader programs."""
@@ -76,7 +79,7 @@ class OGLCanvas(QOpenGLWidget):
     @property
     def camera_pos(self):
         """Return the camera's position."""
-        return QVector3D(0, 4, self.view_distance)
+        return QVector3D(0, 4, self.view_distance - self.zoom)
 
     @property
     def camera_look_at(self):
@@ -125,68 +128,7 @@ class OGLCanvas(QOpenGLWidget):
 
         self.gl.glDrawArrays(self.gl.GL_TRIANGLES, 0, self.objects.points_count)
 
-        # TODO: Debugging lines to check ray picking
-        if self.line_points:
-            R = [1, 0, 0]
-            G = [0, 1, 0]
-            B = [0, 0, 1]
-            view_p = [0, 0, self.view_distance]
-            x_ax = [10, 0, 0]
-            y_ax = [0, 10, 0]
-            zero = [0, 0, 0]
-
-            self.loadAttrArray(self.m_posAttr, self.line_points + (zero + view_p) + (zero + x_ax) + (zero + y_ax))
-            self.loadAttrArray(self.m_colAttr, [1] * len(self.line_points) + R * 2 + G * 2 + B * 2)
-            self.loadAttrArray(self.m_normAttr, [0.0, 1.0, 0.0] * (int(len(self.line_points) / 3) + 6))
-            self.gl.glDrawArrays(self.gl.GL_LINES, 0, int(len(self.line_points)/3) + 6)
-
         self.program.release()
-
-    def move_view(self, x, y):
-        """Rotate the current view by the given values on the respective axes."""
-        self.viewing_angle = [self.viewing_angle[0] + x, self.viewing_angle[1] + y]
-
-    def mouseMoveEvent(self, event):
-        if event.buttons() == QtCore.Qt.NoButton:
-            pass
-        elif event.buttons() == QtCore.Qt.LeftButton:
-            offset = event.pos() - self.mouse_pos
-            self.mouse_pos = event.pos()
-            self.move_view(offset.x(), offset.y())
-        elif event.buttons() == QtCore.Qt.RightButton:
-            pass
-        super(OGLCanvas, self).mouseMoveEvent(event)
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            origin, direction = self.rayPick(event)
-            self.draw_pick_ray(origin, direction)
-
-            if self.objects.ray_pick_test(origin, direction) > 0:
-                self.objects.select()
-        super(OGLCanvas, self).mousePressEvent(event)
-
-    def draw_pick_ray(self, origin, direction):
-        """Draw a line along the provided ray function, along with a marker for the eye and picked point."""
-        def ray_func(p):
-            """Return points along the picking ray"""
-            return origin + p * direction
-
-        self.line_points = []
-        l_prev = ray_func(220)
-        for i in range(10):
-            line = ray_func(i * 20)
-            self.line_points += [
-                line.x(), line.y(), line.z(), l_prev.x(), l_prev.y(), l_prev.z()]
-            l_prev = line
-
-        from ui import MeshDrawable
-        from meristem import Bud
-        self.click_pos = [
-            MeshDrawable(Bud.SPHERE_MODEL, offset=origin, scale=0.5, fill_colour=[0, 1, 0]),
-            MeshDrawable(Bud.SPHERE_MODEL, offset=ray_func(0.1), scale=0.5, fill_colour=[0, 0, 1]),
-        ]
-        return
 
     def rayPick(self, event):
         """Return a picking ray going from the camera through the mouse pointer."""
@@ -216,3 +158,47 @@ class OGLCanvas(QOpenGLWidget):
 
         # Return the origin and direction of the picking ray
         return eye_pos, (pos - eye_pos).normalized()
+
+    # Event handlers
+    def mouseMoveEvent(self, event):
+        if event.buttons() == QtCore.Qt.NoButton:
+            pass
+        elif event.buttons() == QtCore.Qt.LeftButton:
+            offset = event.pos() - self.mouse_pos
+            self.mouse_pos = event.pos()
+            self.rotate_view(offset.x(), offset.y())
+        elif event.buttons() == QtCore.Qt.RightButton:
+            pass
+        super(OGLCanvas, self).mouseMoveEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == QtCore.Qt.LeftButton:
+            self.mouse_pos = event.pos()
+            self.select(event)
+        super(OGLCanvas, self).mousePressEvent(event)
+
+    def rotate_view(self, x, y):
+        """Rotate the current view by the given values on the respective axes."""
+        if self.can_move_camera:
+            self.viewing_angle = [self.viewing_angle[0] + x, self.viewing_angle[1] + y]
+
+    def select(self, event):
+        """Select the item that is under the cursor (if enabled)."""
+        if not self.can_select:
+            return
+
+        origin, direction = self.rayPick(event)
+        if self.objects.ray_pick_test(origin, direction) > 0:
+            self.objects.select()
+
+        # signal all and any slots that something new was selected
+        self.drawable_selected.emit(self.objects.selected)
+
+    def allowSelection(self, state):
+        self.can_select = state
+
+    def allowMovement(self, state):
+        self.can_move_camera = state
+
+    def setZoom(self, value):
+        self.zoom = value
