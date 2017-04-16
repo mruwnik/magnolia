@@ -8,12 +8,18 @@ from PyQt5 import QtCore
 
 class OGLCanvas(QOpenGLWidget):
     """A class to handle displaying OpenGL things on the screen."""
+    PERSPECTIVE = (60, 0.1, 100.0)
+    """The perspective matrix settings (angle, nearZ, farZ)"""
 
     def __init__(self, *args, **kwargs):
         """Initialise a new object."""
         super(OGLCanvas, self).__init__(*args, **kwargs)
         self.objects = []
         self.viewing_angle = [0.0, 0.0]
+
+        # TODO: These are temp variables used for debugging purposes
+        self.line_points = None
+        self.click_pos = []
 
     def _load_program(self, vertex_shader, fragment_shader):
         """Load the given shader programs."""
@@ -49,17 +55,49 @@ class OGLCanvas(QOpenGLWidget):
         self.objects.append(drawable)
 
     @property
+    def viewport_proportions(self):
+        """The proportions of the view port."""
+        return self.width() / float(self.height())
+
+    @property
     def p_matrix(self):
+        """Get the perspective matrix."""
         matrix = QMatrix4x4()
-        matrix.perspective(60, 4.0/3.0, 0.1, 100.0)
+        angle, near, far = self.PERSPECTIVE
+        matrix.perspective(angle, self.viewport_proportions, near, far)
+        return matrix
+
+    @property
+    def view_distance(self):
+        """Get the distance from which things should be viewed."""
+        return -math.sqrt(self.width() * self.height())/50.0
+
+    @property
+    def camera_pos(self):
+        """Return the camera's position."""
+        return QVector3D(0, 4, self.view_distance)
+
+    @property
+    def camera_look_at(self):
+        """A point at which the camera is pointed."""
+        return QVector3D(0, 4, 0)
+
+    @property
+    def camera_normal(self):
+        """The camera's up vector."""
+        return QVector3D(0, 1, 0)
+
+    @property
+    def v_matrix(self):
+        """The view matrix in use."""
+        matrix = QMatrix4x4()
+        matrix.lookAt(self.camera_pos, self.camera_look_at, self.camera_normal)
         return matrix
 
     @property
     def mv_matrix(self):
         """Return the current model-view matrix."""
-        matrix = QMatrix4x4()
-        matrix.lookAt(
-            QVector3D(0, 0, -math.sqrt(self.width() * self.height())/50.0), QVector3D(0, 4, 0), QVector3D(0, 1, 0))
+        matrix = self.v_matrix
         matrix.rotate(self.viewing_angle[0], 0, 1, 0)
         matrix.rotate(self.viewing_angle[1], 0, 0, 1)
         # matrix.translate(0, -5, 0)
@@ -83,7 +121,7 @@ class OGLCanvas(QOpenGLWidget):
         vertices = array.array('f', [])
         colours = array.array('f', [])
         normals = array.array('f', [])
-        for obj in self.objects:
+        for obj in self.objects + self.click_pos:
             vertices += obj.vertices
             colours += obj.colours
             normals += obj.normals
@@ -93,6 +131,21 @@ class OGLCanvas(QOpenGLWidget):
         self.loadAttrArray(self.m_normAttr, normals)
 
         self.gl.glDrawArrays(self.gl.GL_TRIANGLES, 0, len(vertices) / 3)
+
+        # TODO: Debugging lines to check ray picking
+        if self.line_points:
+            R = [1, 0, 0]
+            G = [0, 1, 0]
+            B = [0, 0, 1]
+            view_p = [0, 0, self.view_distance]
+            x_ax = [10, 0, 0]
+            y_ax = [0, 10, 0]
+            zero = [0, 0, 0]
+
+            self.loadAttrArray(self.m_posAttr, self.line_points + (zero + view_p) + (zero + x_ax) + (zero + y_ax))
+            self.loadAttrArray(self.m_colAttr, [1] * len(self.line_points) + R * 2 + G * 2 + B * 2)
+            self.loadAttrArray(self.m_normAttr, [0.0, 1.0, 0.0] * (int(len(self.line_points) / 3) + 6))
+            self.gl.glDrawArrays(self.gl.GL_LINES, 0, int(len(self.line_points)/3) + 6)
 
         self.program.release()
 
@@ -113,5 +166,55 @@ class OGLCanvas(QOpenGLWidget):
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.LeftButton:
-            self.mouse_pos = event.pos()
+            ray = self.rayPick(event)
+            self.draw_pick_ray(ray)
         super(OGLCanvas, self).mousePressEvent(event)
+
+    def draw_pick_ray(self, ray_func):
+        """Draw a line along the provided ray function, along with a marker for the eye and picked point."""
+        eye_pos = ray_func(0)
+        pos = ray_func(0.1)
+        self.line_points = []
+        l_prev = ray_func(600)
+        for i in range(10):
+            line = ray_func(500 - i * 100)
+            self.line_points += [
+                line.x(), line.y(), line.z(), l_prev.x(), l_prev.y(), l_prev.z()]
+            l_prev = line
+
+        from ui import MeshDrawable
+        from meristem import Bud
+        self.click_pos = [
+            MeshDrawable(Bud.SPHERE_MODEL, offset=eye_pos, scale=0.5, fill_colour=[0, 1, 0]),
+            MeshDrawable(Bud.SPHERE_MODEL, offset=pos, scale=0.5, fill_colour=[0, 0, 1]),
+        ]
+        return
+
+    def rayPick(self, event):
+        """Return a picking ray going from the camera through the mouse pointer."""
+        self.mouse_pos = event.pos()
+        x = (2.0 * event.x()) / self.width() - 1.0
+        y = 1.0 - (2.0 * event.y()) / self.height()
+
+        angle, nearZ, _ = self.PERSPECTIVE
+        rad = angle * math.pi / 180
+        vLength = math.tan(rad / 2) * nearZ
+        hLength = vLength * self.viewport_proportions
+
+        # get the camera position in world space
+        camera_pos = (self.v_matrix * self.camera_pos.toVector4D()).toVector3D()
+
+        view = (self.camera_look_at - camera_pos).normalized()
+        h = view.crossProduct(view, self.camera_normal).normalized()
+        v = view.crossProduct(h, view).normalized() * vLength
+
+        # get the point that was clicked on the XY-plane for Z equal to the closer clip plane
+        # The point is, of course, in model space
+        pos = camera_pos + view * nearZ + h * x * hLength + v * y
+        pos = (self.mv_matrix.inverted()[0] * pos.toVector4D()).toVector3D()
+
+        # work out where the camera is in model space
+        eye_pos = (self.mv_matrix.inverted()[0] * camera_pos.toVector4D()).toVector3D()
+
+        # Return points along the picking ray
+        return lambda p: pos + p * (eye_pos - pos)
