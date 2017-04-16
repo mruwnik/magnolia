@@ -52,22 +52,26 @@ def make_buds(layers, size, colour, height=0):
 
 class Prog(QMainWindow):
     def __init__(self):
+        """Initialise the whole program."""
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # Make a dummy meristem with random buds in different colours
         meristem = Meristem()
-
         big_buds = make_buds(10, 7, (0.7, 0.0, 0.0))
         small_buds = make_buds(10, 30, (0.0, 0.7, 0.0), height=4.6)
         medium_buds = make_buds(10, 15, (0.0, 0.0, 0.7), height=5.7)
 
+        # add the buds
         buds = big_buds + small_buds + medium_buds
         meristem.add(*buds)
 
+        # set the OpenGL canvas up with the meristem
         self.ui.mainCanvas.add(meristem)
         self.ui.mainCanvas.drawable_selected.connect(self.bud_selected)
 
+        # Set a timer to refresh the OpenGL screen every 20ms (50fps)
         timer = QTimer(self)
         timer.timeout.connect(self.ui.mainCanvas.update)
         timer.start(20)

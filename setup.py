@@ -13,6 +13,7 @@ setup(
     install_requires=[
         'ipython',
         'PyQt5',
+        'path.py==10.1',
     ],
     tests_require=[
         'pytest==2.7.3',
