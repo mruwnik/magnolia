@@ -40,7 +40,8 @@ class OGLCanvas(QOpenGLWidget):
         self._load_program('ui/shaders/vshader.glsl', 'ui/shaders/fshader.glsl')
 
         # FIXME: this should check which versions are available and then apply the appropriate one
-        version.setVersion(2, 0)
+        #version.setVersion(2, 0)
+        version.setVersion(1, 0)
         self.gl = self.context().versionFunctions(version)
         self.gl.initializeOpenGLFunctions()
 
