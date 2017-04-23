@@ -1,7 +1,7 @@
 import array
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from qtpy.QtCore import QTimer
+from qtpy.QtWidgets import QApplication, QMainWindow
 
 from ui import Ui_MainWindow
 from meristem import Meristem, Bud

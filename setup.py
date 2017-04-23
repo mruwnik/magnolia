@@ -12,7 +12,7 @@ setup(
     packages=packages,
     install_requires=[
         'ipython',
-        'PyQt5',
+        'qtpy==1.2.1',
         'path.py==10.1',
     ],
     tests_require=[

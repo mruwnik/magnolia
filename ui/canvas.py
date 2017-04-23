@@ -1,8 +1,8 @@
 import math
 
-from PyQt5.QtWidgets import QOpenGLWidget
-from PyQt5.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGLVersionProfile, QVector3D
-from PyQt5 import QtCore
+from qtpy.QtWidgets import QOpenGLWidget
+from qtpy.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGLVersionProfile, QVector3D
+from qtpy import QtCore
 
 from ui.drawables import MultiDrawable, Drawable
 
@@ -12,7 +12,7 @@ class OGLCanvas(QOpenGLWidget):
     PERSPECTIVE = (60, 0.1, 120.0)
     """The perspective matrix settings (angle, nearZ, farZ)"""
 
-    drawable_selected = QtCore.pyqtSignal(Drawable, name="drawableSelected")
+    drawable_selected = QtCore.Signal(Drawable, name="drawableSelected")
 
     def __init__(self, *args, **kwargs):
         """Initialise a new object."""
@@ -40,8 +40,8 @@ class OGLCanvas(QOpenGLWidget):
         self._load_program('ui/shaders/vshader.glsl', 'ui/shaders/fshader.glsl')
 
         # FIXME: this should check which versions are available and then apply the appropriate one
-        #version.setVersion(2, 0)
-        version.setVersion(1, 0)
+        version.setVersion(2, 0)
+        #version.setVersion(1, 0)
         self.gl = self.context().versionFunctions(version)
         self.gl.initializeOpenGLFunctions()
 

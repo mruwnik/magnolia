@@ -1,12 +1,12 @@
 import array
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from qtpy.QtCore import QObject, Signal
 
 
 class Drawable(QObject):
     """This represents something that can be rendered by OpenGL."""
 
-    needsRefresh = pyqtSignal(str)
+    needsRefresh = Signal(str)
     """Signal that something has changed and so the signaled object should refresh the given field (None for all)."""
 
     def __init__(self, points=None, vertices=None, colours=None, normals=None):
