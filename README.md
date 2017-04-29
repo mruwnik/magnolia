@@ -22,7 +22,7 @@ This is based on PyQt5 for python3, so the following must be installed:
 
 * Qt5 can be downloaded from their [website](http://info.qt.io/download-qt-for-application-development). It's probably best to also install qtcreator while installing the rest of it.
 * PyQt5 can be installed via pip. Unfortunately it doesn't want to play nicely with setup.py, and I can't be bothered to get it to work, so this will have to be done manually. More about that below.
-* For development it's generally a good idea to have a decent IDE. I personally use [spacemacs](http://info.qt.io/download-qt-for-application-development), but a lot of people are satisfied with e.g. [PyCharm](http://info.qt.io/download-qt-for-application-development). PyCharm makes git easy (as long as your uses are really simple) and it also handles your virtualenvs for you, so it's worth investigating.
+* For development it's generally a good idea to have a decent IDE. I personally use [spacemacs](http://spacemacs.org/), but a lot of people are satisfied with e.g. [PyCharm](https://www.jetbrains.com/pycharm/download/). PyCharm makes git easy (as long as your uses are really simple) and it also handles your virtualenvs for you, so it's worth investigating.
 
 ## Virtualenv
 Python without [virtualenvs](http://python-guide-pt-br.readthedocs.io/en/latest/dev/virtualenvs/) can lead to dependancy hell, so make use of them. To set up the environment (assuming all dependancies have been installed), run the following commands (skip the `$`):
@@ -49,6 +49,7 @@ This should result in PyCharm seeing the project
 ### Install python dependancies
 * open `main.py`
 * a popup should appear notifying that certain requirements are missing -> click `Install requirements` -> Install
+* install python Qt5 bindings. This can be done via File->Settings->Project->Project Interpreter. Click on the green '+' at the top right of the table to add a new library. Search for PyQt5 and press "Install package".
 * After all dependancies are installed (which can take a while) click the green triangle (or Run -> Run) to run the program
 
 # UI modifications
