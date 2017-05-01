@@ -4,7 +4,7 @@ from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from ui import Ui_MainWindow
-from meristem import Meristem, Bud
+from meristem import Meristem, Bud, get_reachable
 
 
 def make_ring(start_angle, height, items, colour):
@@ -26,7 +26,7 @@ def make_ring(start_angle, height, items, colour):
             height=height,
             angle=start_angle + i*angle_step,  # move around the circle by angle_step degrees
             fill_colour=colour,
-            scale=(base_radius + 1) / items  # scale the bud so that the more there are, the smaller they are
+            scale=(base_radius + 2.4) / items  # scale the bud so that the more there are, the smaller they are
         ) for i in range(items)
     ]
 
@@ -43,9 +43,9 @@ def make_buds(layers, size, colour, height=0):
     scale = 3 / size
     for i in range(layers):
         # step around by this many degrees
-        angle = i * 90.0/size
+        angle = i * 20.0/size
         # the offset is scaled so that the layers "fit in" to each other
-        layer_height = height + i * scale
+        layer_height = height + i * (scale + 0.1)
         buds += make_ring(start_angle=angle, height=layer_height, items=size, colour=colour)
     return buds
 
@@ -58,17 +58,12 @@ class Prog(QMainWindow):
         self.ui.setupUi(self)
 
         # Make a dummy meristem with random buds in different colours
-        meristem = Meristem()
-        big_buds = make_buds(10, 7, (0.7, 0.0, 0.0))
-        small_buds = make_buds(10, 30, (0.0, 0.7, 0.0), height=4.6)
-        medium_buds = make_buds(10, 15, (0.0, 0.0, 0.7), height=5.7)
-
-        # add the buds
-        buds = big_buds + small_buds + medium_buds
-        meristem.add(*buds)
+        self.meristem = Meristem()
+        buds = make_buds(20, 15, (0.0, 0.0, 0.7), height=1)
+        self.meristem.add(*buds)
 
         # set the OpenGL canvas up with the meristem
-        self.ui.mainCanvas.add(meristem)
+        self.ui.mainCanvas.add(self.meristem)
         self.ui.mainCanvas.drawable_selected.connect(self.bud_selected)
 
         # Set a timer to refresh the OpenGL screen every 20ms (50fps)
@@ -77,11 +72,22 @@ class Prog(QMainWindow):
         timer.start(20)
 
     def bud_selected(self, bud):
-        """Handle a bud being selected. This just turns it white, coz why not?"""
+        """Handle a bud being selected. It displays the selected bud's neighbours."""
         if not bud:
             return
-        bud.colours = array.array('f', [1, 1, 1] * int(len(bud.vertices)/3))
-        bud.needsRefresh.emit('colours')
+
+        # Reset all colours
+        for b in self.meristem.objects:
+            b.colours = array.array('f', [0, 0, 0.7] * int(len(b.vertices)/3))
+            b.needsRefresh.emit('colours')
+
+        # Loop through all reachable buds, colouring them relative to their distance
+        for b in get_reachable(bud, self.meristem.closest(bud)):
+            d = bud.distance(b)
+            b.colours = array.array('f', [d/bud.radius, 1, 1 - d/bud.radius] * int(len(b.vertices)/3))
+
+        bud.colours = array.array('f', [0, 1, 0] * int(len(bud.vertices)/3))
+        self.meristem.refresh_field('colours')
 
 
 def main():
