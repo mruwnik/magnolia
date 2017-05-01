@@ -1,3 +1,4 @@
+import array
 import math
 
 from PyQt5.QtGui import QVector3D
@@ -111,6 +112,14 @@ def solve_quadratic(a, b, c):
 
 class Bud(MeshDrawable):
     SPHERE_MODEL = OBJReader('sphere.obj').objects['sphere']
+    VERTICE_COUNT = int(len(SPHERE_MODEL.vertices)/3)
+
+    RED = (1, 0, 0)
+    GREEN = (0, 0.8, 0)
+    BLUE = (0, 0, 0.7)
+    WHITE = (1, 1, 1)
+    COLOURS = {}
+    """A buffer of colour arrays to speed things up (rather than recreate one for each colour change)."""
 
     def __init__(self, *args, **kwargs):
         """Initialse this bud, positioning it appropriately upon the meristem.
@@ -124,6 +133,7 @@ class Bud(MeshDrawable):
         self.angle = math.radians(-kwargs.pop('angle', 0))
         self.height = kwargs.pop('height', 0)
 
+        kwargs['colours'] = kwargs.pop('fill_colour', self.WHITE)
         if 'mesh' not in kwargs:
             kwargs['mesh'] = self.SPHERE_MODEL
         kwargs.pop('offset', None)
@@ -139,6 +149,18 @@ class Bud(MeshDrawable):
         x = math.sin(self.angle) * self.radius
         z = math.cos(self.angle) * self.radius
         return (x, self.height, z)
+
+    @property
+    def colours(self):
+        """Get an array of colours for each vertex."""
+        return self.COLOURS.get(self._colour)
+
+    @colours.setter
+    def colours(self, colour):
+        """Set the colour of each vertex to the given color."""
+        self._colour = tuple(colour) or self.WHITE
+        if self._colour not in self.COLOURS:
+            self.COLOURS[self._colour] = array.array('f', self._colour * self.VERTICE_COUNT)
 
     def angle2x(self, angle):
         """Return the given angle in pseudo 2D coordinates.

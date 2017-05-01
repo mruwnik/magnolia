@@ -70,19 +70,23 @@ class LineDrawable(Drawable):
 class MeshDrawable(Drawable):
     """A container for a model mesh."""
 
-    def __init__(self, mesh, offset=None, scale=1, fill_colour=None):
+    def __init__(self, mesh, offset=None, scale=1, fill_colour=None, colours=None):
         """Initialise the object, setting the colour to light gray.
 
         :param MeshData mesh: the mesh to be rendered.
         :param [x, y, z] offset: the whole mesh will be translated by the given values
         :param list fill_colour: a 3 part colour list. Each part should be between 0.0 and 1.0
+        :param list colours: colours for each vertice
         """
         self.mesh = mesh
         self._offset = offset or (0, 0, 0)
         self.scale = scale
         if not fill_colour:
             fill_colour = [0.7, 0.7, 0.7]
-        super(MeshDrawable, self).__init__(colours=array.array('f', fill_colour * int(len(self.vertices)/3)))
+        if not colours:
+            colours = array.array('f', fill_colour * int(len(self.vertices)/3))
+
+        super(MeshDrawable, self).__init__(colours=colours)
 
     @property
     def offset(self):

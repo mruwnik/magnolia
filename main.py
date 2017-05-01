@@ -78,15 +78,15 @@ class Prog(QMainWindow):
 
         # Reset all colours
         for b in self.meristem.objects:
-            b.colours = array.array('f', [0, 0, 0.7] * int(len(b.vertices)/3))
+            b.colours = b.BLUE
             b.needsRefresh.emit('colours')
 
         # Loop through all reachable buds, colouring them relative to their distance
         for b in get_reachable(bud, self.meristem.closest(bud)):
             d = bud.distance(b)
-            b.colours = array.array('f', [d/bud.radius, 1, 1 - d/bud.radius] * int(len(b.vertices)/3))
+            b.colours = (d/bud.radius, 1, 1 - d/bud.radius)
 
-        bud.colours = array.array('f', [0, 1, 0] * int(len(bud.vertices)/3))
+        bud.colours = bud.GREEN
         self.meristem.refresh_field('colours')
 
 
