@@ -18,12 +18,13 @@ class OGLCanvas(QOpenGLWidget):
         """Initialise a new object."""
         super(OGLCanvas, self).__init__(*args, **kwargs)
         self.objects = MultiDrawable([])
+        self.lines = MultiDrawable([])
         self.viewing_angle = [0.0, 0.0]
-        self.zoom = 10
+        self.zoom = 0
 
         # set default settings
         self.can_move_camera = True
-        self.can_select = False
+        self.can_select = True
 
     def _load_program(self, vertex_shader, fragment_shader):
         """Load the given shader programs."""
@@ -123,11 +124,18 @@ class OGLCanvas(QOpenGLWidget):
         self.program.setUniformValue(self.norm_matrixUniform, self.mv_matrix.inverted()[0])
         self.program.setUniformValue(self.p_matrixUniform, self.p_matrix)
 
-        self.loadAttrArray(self.m_posAttr, self.objects.vertices)
-        self.loadAttrArray(self.m_colAttr, self.objects.colours)
-        self.loadAttrArray(self.m_normAttr, self.objects.normals)
+        if self.objects.objects:
+            self.loadAttrArray(self.m_posAttr, self.objects.vertices)
+            self.loadAttrArray(self.m_colAttr, self.objects.colours)
+            self.loadAttrArray(self.m_normAttr, self.objects.normals)
 
-        self.gl.glDrawArrays(self.gl.GL_TRIANGLES, 0, self.objects.points_count)
+            self.gl.glDrawArrays(self.gl.GL_TRIANGLES, 0, self.objects.points_count)
+
+        if self.lines.objects:
+            self.loadAttrArray(self.m_posAttr, self.lines.vertices)
+            self.loadAttrArray(self.m_colAttr, self.lines.colours)
+
+            self.gl.glDrawArrays(self.gl.GL_LINES, 0, self.lines.points_count)
 
         self.program.release()
 

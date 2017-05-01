@@ -19,7 +19,7 @@ class Drawable(QObject):
         """
         super(Drawable, self).__init__()
         self.points = points
-        self._normals = normals
+        self._normals = normals or array.array('f', [])
 
         if self.points:
             self._vertices = array.array('f', [coord for point in self.points for coord in point])
@@ -52,6 +52,19 @@ class Drawable(QObject):
     def select(self):
         """Select this object"""
         return self
+
+
+class LineDrawable(Drawable):
+    """A single straight line."""
+
+    def __init__(self, p1, p2, colour):
+        """Setup the line.
+
+        :param tuple p1: the start point of the line
+        :param tuple p2: the end point of the line
+        :param tuple colour: the colour of the line
+        """
+        super(LineDrawable, self).__init__(points=[p1, p2], colours=array.array('f', colour * 2))
 
 
 class MeshDrawable(Drawable):

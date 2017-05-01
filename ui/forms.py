@@ -42,7 +42,7 @@ class Ui_MainWindow(object):
         self.zoom = QtWidgets.QSlider(self.mainWidget)
         self.zoom.setMinimum(-10)
         self.zoom.setMaximum(89)
-        self.zoom.setProperty("value", 10)
+        self.zoom.setProperty("value", 0)
         self.zoom.setOrientation(QtCore.Qt.Vertical)
         self.zoom.setObjectName("zoom")
         self.horizontalLayout.addWidget(self.zoom)
