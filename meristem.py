@@ -93,6 +93,15 @@ class Bud(MeshDrawable):
         """Calculate the distance between this bud and the provided one."""
         return math.sqrt(self.angle2x(self.angle - bud.angle)**2 + (self.height - bud.height)**2)
 
+    def opposite(self, b1, b2):
+        """Check whether the given buds are on the opposite sides of this bud.
+
+        This checks to a precision of 1% of the radius.
+        """
+        angles_diff = abs(self.angle2x(b1.angle - self.angle) + self.angle2x(b2.angle - self.angle))
+        height_diff = abs(abs(b1.height + b2.height)/2 - abs(self.height))
+        return angles_diff < self.radius / 100 and height_diff < self.radius / 100
+
     def select(self):
         """Select this bud."""
         return self

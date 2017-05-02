@@ -115,11 +115,12 @@ class MultiDrawable(Drawable):
 
     def __init__(self, *args, **kwargs):
         """Initialise the collection with a list of objects."""
-        self.objects = kwargs.pop('objects', [])
+        objects = kwargs.pop('objects', [])
         super(MultiDrawable, self).__init__(*args, **kwargs)
 
         self.selected = []
-        self.calculate_lists()
+        self.objects = []
+        self.add(*objects)
 
     def add(self, *items):
         """Append the provided items to the list of items."""

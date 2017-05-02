@@ -1,5 +1,16 @@
 import math
 
+from meristem import Bud, Meristem
+
+
+def linear_function(b1, b2):
+    """Get a linear function that goes through the given buds."""
+    if not b1.angle2x(b2.angle - b1.angle):
+        return lambda bud: bud.height if bud.angle == b1.angle else 100 - bud.height
+    m = (b2.height - b1.height) / b1.angle2x(b2.angle - b1.angle)
+    x = b1.height - b2.height
+    return lambda bud: m * bud.angle2x(bud.angle - b1.angle) + b1.height
+
 
 def perendicular_line(b1, b2):
     """Get a line function that is perendicular to the line between the 2 buds.
@@ -59,6 +70,9 @@ def get_reachable(selected, buds):
 
     tested, filtered = buds[0], []
 
+    if tested == selected:
+        return buds
+
     # Check whether the 2 bud circles are intersecting
     if selected.distance(tested) <= selected.scale + tested.scale:
         # the circles are intersecting, so get a line perendicular to the tested bud. Any buds
@@ -97,3 +111,50 @@ def get_reachable(selected, buds):
             filtered.append(bud)
     return [tested] + get_reachable(selected, filtered)
 
+
+class BudGraph(Meristem):
+    """Represents a graph of all buds."""
+
+    def __init__(self, *args, **kwargs):
+        super(BudGraph, self).__init__(*args, **kwargs)
+        self.nodes = {}
+
+    def add(self, *args):
+        """Add the provided items."""
+        super(BudGraph, self).add(*args)
+        for bud in args:
+            self.add_node(bud)
+
+    def add_node(self, bud):
+        """Add the given node to the graph, refreshing any previous connections that may get disrupted."""
+        neighbours = get_reachable(bud, self.closest(bud))
+        self.nodes[bud] = neighbours
+        # For most cases it should suffice to simply append the new bud to the list of
+        # neighbours of each of its neighbours. This will fail if the new node is between
+        # 2 other nodes. In that case both of them won't see each other, but will see the
+        # new node, so everything should be ok
+        for neighbour in neighbours:
+            self.nodes[neighbour] = get_reachable(neighbour, self.closest(neighbour))
+
+    def neighbours(self, bud):
+        """Get a list of all buds that can be reached by the provided bud."""
+        return self.nodes[bud]
+
+    def axes(self, bud):
+        """Yield functions describing all possible axes through the given bud.
+
+        A axis is defined as any line that goes through a bud and at least 2 of its neighbours.
+        """
+        paired = []
+        neighbours = self.neighbours(bud)
+        for i, neighbour in enumerate(neighbours):
+            if neighbour in paired:
+                continue
+            for checked in neighbours[i + 1:]:
+                if bud.opposite(neighbour, checked):
+                    paired += [neighbour, checked]
+                    yield linear_function(neighbour, checked)
+
+    def on_line(self, line):
+        """Get all buds that are on the given line."""
+        return [b for b in self.objects if round(line(b) - b.height, 5) == 0]

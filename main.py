@@ -5,7 +5,7 @@ from qtpy.QtWidgets import QApplication, QMainWindow
 
 from ui import Ui_MainWindow
 from meristem import Meristem, Bud
-from graph import get_reachable
+from graph import get_reachable, BudGraph
 
 
 def make_ring(start_angle, height, items, colour):
@@ -27,7 +27,7 @@ def make_ring(start_angle, height, items, colour):
             height=height,
             angle=start_angle + i*angle_step,  # move around the circle by angle_step degrees
             fill_colour=colour,
-            scale=(base_radius + 1) / items  # scale the bud so that the more there are, the smaller they are
+            scale=(base_radius + 2) / items  # scale the bud so that the more there are, the smaller they are
         ) for i in range(items)
     ]
 
@@ -44,9 +44,9 @@ def make_buds(layers, size, colour, height=0):
     scale = 3 / size
     for i in range(layers):
         # step around by this many degrees
-        angle = i * 120.0/size
+        angle = i * 30.0/size
         # the offset is scaled so that the layers "fit in" to each other
-        layer_height = height + i * scale * 1.4
+        layer_height = height + i * scale * 1
         buds += make_ring(start_angle=angle, height=layer_height, items=size, colour=colour)
     return buds
 
@@ -59,7 +59,7 @@ class Prog(QMainWindow):
         self.ui.setupUi(self)
 
         # Make a dummy meristem with random buds in different colours
-        self.meristem = Meristem()
+        self.meristem = BudGraph()
         buds = make_buds(20, 15, (0.0, 0.0, 0.7), height=1)
         self.meristem.add(*buds)
 
@@ -80,12 +80,15 @@ class Prog(QMainWindow):
         # Reset all colours
         for b in self.meristem.objects:
             b.colours = b.BLUE
-            b.needsRefresh.emit('colours')
 
         # Loop through all reachable buds, colouring them relative to their distance
-        for b in get_reachable(bud, self.meristem.closest(bud)):
+        for b in self.meristem.neighbours(bud):
             d = bud.distance(b)
             b.colours = (d/bud.radius, 1, 1 - d/bud.radius)
+
+        for line in self.meristem.axes(bud):
+            for b in self.meristem.on_line(line):
+                b.colours = (1/size, 1 - 1/size, 0.5)
 
         bud.colours = bud.GREEN
         self.meristem.refresh_field('colours')
