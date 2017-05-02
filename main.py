@@ -4,7 +4,8 @@ from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from ui import Ui_MainWindow
-from meristem import Meristem, Bud, get_reachable
+from meristem import Meristem, Bud
+from graph import get_reachable
 
 
 def make_ring(start_angle, height, items, colour):
@@ -26,7 +27,7 @@ def make_ring(start_angle, height, items, colour):
             height=height,
             angle=start_angle + i*angle_step,  # move around the circle by angle_step degrees
             fill_colour=colour,
-            scale=(base_radius + 2.4) / items  # scale the bud so that the more there are, the smaller they are
+            scale=(base_radius + 1) / items  # scale the bud so that the more there are, the smaller they are
         ) for i in range(items)
     ]
 
@@ -43,9 +44,9 @@ def make_buds(layers, size, colour, height=0):
     scale = 3 / size
     for i in range(layers):
         # step around by this many degrees
-        angle = i * 20.0/size
+        angle = i * 120.0/size
         # the offset is scaled so that the layers "fit in" to each other
-        layer_height = height + i * (scale + 0.1)
+        layer_height = height + i * scale * 1.4
         buds += make_ring(start_angle=angle, height=layer_height, items=size, colour=colour)
     return buds
 
