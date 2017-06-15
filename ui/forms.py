@@ -6,7 +6,7 @@
 #
 # WARNING! All changes made in this file will be lost!
 
-from qtpy import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -30,19 +30,37 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setSpacing(6)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.mainCanvas = OGLCanvas(self.mainWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.mainCanvas.sizePolicy().hasHeightForWidth())
         self.mainCanvas.setSizePolicy(sizePolicy)
+        self.mainCanvas.setMinimumSize(QtCore.QSize(0, 0))
         self.mainCanvas.setCursor(QtGui.QCursor(QtCore.Qt.PointingHandCursor))
         self.mainCanvas.setMouseTracking(True)
         self.mainCanvas.setObjectName("mainCanvas")
         self.horizontalLayout.addWidget(self.mainCanvas)
+        self.flatStem = FlatStem(self.mainWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.flatStem.sizePolicy().hasHeightForWidth())
+        self.flatStem.setSizePolicy(sizePolicy)
+        self.flatStem.setAutoFillBackground(True)
+        brush = QtGui.QBrush(QtGui.QColor(0, 0, 0))
+        brush.setStyle(QtCore.Qt.SolidPattern)
+        self.flatStem.setBackgroundBrush(brush)
+        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
+        brush.setStyle(QtCore.Qt.NoBrush)
+        self.flatStem.setForegroundBrush(brush)
+        self.flatStem.setResizeAnchor(QtWidgets.QGraphicsView.AnchorViewCenter)
+        self.flatStem.setViewportUpdateMode(QtWidgets.QGraphicsView.BoundingRectViewportUpdate)
+        self.flatStem.setObjectName("flatStem")
+        self.horizontalLayout.addWidget(self.flatStem)
         self.zoom = QtWidgets.QSlider(self.mainWidget)
         self.zoom.setMinimum(-10)
         self.zoom.setMaximum(89)
-        self.zoom.setProperty("value", 0)
+        self.zoom.setProperty("value", 10)
         self.zoom.setOrientation(QtCore.Qt.Vertical)
         self.zoom.setObjectName("zoom")
         self.horizontalLayout.addWidget(self.zoom)
@@ -61,10 +79,12 @@ class Ui_MainWindow(object):
         self.pushButton_2 = QtWidgets.QPushButton(self.mainWidget)
         self.pushButton_2.setObjectName("pushButton_2")
         self.optionsContainer.addWidget(self.pushButton_2)
-        self.pushButton = QtWidgets.QPushButton(self.mainWidget)
-        self.pushButton.setObjectName("pushButton")
-        self.optionsContainer.addWidget(self.pushButton)
+        self.redrawButton = QtWidgets.QPushButton(self.mainWidget)
+        self.redrawButton.setObjectName("redrawButton")
+        self.optionsContainer.addWidget(self.redrawButton)
         self.horizontalLayout.addLayout(self.optionsContainer)
+        self.horizontalLayout.setStretch(0, 1)
+        self.horizontalLayout.setStretch(1, 1)
         self.horizontalLayout_2.addLayout(self.horizontalLayout)
         MainWindow.setCentralWidget(self.mainWidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
@@ -82,6 +102,10 @@ class Ui_MainWindow(object):
         self.mode_movement.toggled['bool'].connect(self.mainCanvas.allowMovement)
         self.mode_selection.toggled['bool'].connect(self.mainCanvas.allowSelection)
         self.zoom.valueChanged['int'].connect(self.mainCanvas.setZoom)
+        self.zoom.valueChanged['int'].connect(self.flatStem.setZoom)
+        self.mode_selection.toggled['bool'].connect(self.flatStem.allowSelection)
+        self.mode_movement.toggled['bool'].connect(self.flatStem.allowMovement)
+        self.redrawButton.pressed.connect(self.flatStem.redraw)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -90,6 +114,7 @@ class Ui_MainWindow(object):
         self.mode_movement.setText(_translate("MainWindow", "Ruch"))
         self.mode_selection.setText(_translate("MainWindow", "Wybieranie"))
         self.pushButton_2.setText(_translate("MainWindow", "PushButton"))
-        self.pushButton.setText(_translate("MainWindow", "PushButton"))
+        self.redrawButton.setText(_translate("MainWindow", "redraw"))
 
 from ui.canvas import OGLCanvas
+from ui.flat import FlatStem

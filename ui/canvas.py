@@ -2,29 +2,19 @@ import math
 
 from qtpy.QtWidgets import QOpenGLWidget
 from qtpy.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGLVersionProfile, QVector3D
-from qtpy import QtCore
 
-from ui.drawables import MultiDrawable, Drawable
+from ui.drawables import MultiDrawable, MeristemActions
 
 
-class OGLCanvas(QOpenGLWidget):
+class OGLCanvas(MeristemActions, QOpenGLWidget):
     """A class to handle displaying OpenGL things on the screen."""
     PERSPECTIVE = (60, 0.1, 120.0)
     """The perspective matrix settings (angle, nearZ, farZ)"""
 
-    drawable_selected = QtCore.Signal(Drawable, name="drawableSelected")
-
     def __init__(self, *args, **kwargs):
         """Initialise a new object."""
         super(OGLCanvas, self).__init__(*args, **kwargs)
-        self.objects = MultiDrawable([])
         self.lines = MultiDrawable([])
-        self.viewing_angle = [0.0, 0.0]
-        self.zoom = 0
-
-        # set default settings
-        self.can_move_camera = True
-        self.can_select = True
 
     def _load_program(self, vertex_shader, fragment_shader):
         """Load the given shader programs."""
@@ -55,10 +45,6 @@ class OGLCanvas(QOpenGLWidget):
 
         self.gl.glEnable(self.gl.GL_DEPTH_TEST)
         self.gl.glEnable(self.gl.GL_CULL_FACE)
-
-    def add(self, drawable):
-        """Add the provided drawable to the list of objects."""
-        self.objects.add(drawable)
 
     @property
     def viewport_proportions(self):
@@ -106,7 +92,6 @@ class OGLCanvas(QOpenGLWidget):
         matrix = self.v_matrix
         matrix.rotate(self.viewing_angle[0], 0, 1, 0)
         matrix.rotate(self.viewing_angle[1], 0, 0, 1)
-        # matrix.translate(0, -5, 0)
         return matrix
 
     def loadAttrArray(self, attr, array):
@@ -169,28 +154,6 @@ class OGLCanvas(QOpenGLWidget):
         return eye_pos, (pos - eye_pos).normalized()
 
     # Event handlers
-    def mouseMoveEvent(self, event):
-        if event.buttons() == QtCore.Qt.NoButton:
-            pass
-        elif event.buttons() == QtCore.Qt.LeftButton:
-            offset = event.pos() - self.mouse_pos
-            self.mouse_pos = event.pos()
-            self.rotate_view(offset.x(), offset.y())
-        elif event.buttons() == QtCore.Qt.RightButton:
-            pass
-        super(OGLCanvas, self).mouseMoveEvent(event)
-
-    def mousePressEvent(self, event):
-        if event.button() == QtCore.Qt.LeftButton:
-            self.mouse_pos = event.pos()
-            self.select(event)
-        super(OGLCanvas, self).mousePressEvent(event)
-
-    def rotate_view(self, x, y):
-        """Rotate the current view by the given values on the respective axes."""
-        if self.can_move_camera:
-            self.viewing_angle = [self.viewing_angle[0] + x, self.viewing_angle[1] + y]
-
     def select(self, event):
         """Select the item that is under the cursor (if enabled)."""
         if not self.can_select:
@@ -202,12 +165,3 @@ class OGLCanvas(QOpenGLWidget):
 
         # signal all and any slots that something new was selected
         self.drawable_selected.emit(self.objects.selected)
-
-    def allowSelection(self, state):
-        self.can_select = state
-
-    def allowMovement(self, state):
-        self.can_move_camera = state
-
-    def setZoom(self, value):
-        self.zoom = value

@@ -25,23 +25,66 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_2">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,1,0,0">
       <property name="sizeConstraint">
        <enum>QLayout::SetNoConstraint</enum>
       </property>
       <item>
        <widget class="OGLCanvas" name="mainCanvas">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>0</height>
+         </size>
         </property>
         <property name="cursor">
          <cursorShape>PointingHandCursor</cursorShape>
         </property>
         <property name="mouseTracking">
          <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="FlatStem" name="flatStem">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="autoFillBackground">
+         <bool>true</bool>
+        </property>
+        <property name="backgroundBrush">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>0</red>
+           <green>0</green>
+           <blue>0</blue>
+          </color>
+         </brush>
+        </property>
+        <property name="foregroundBrush">
+         <brush brushstyle="NoBrush">
+          <color alpha="255">
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
+          </color>
+         </brush>
+        </property>
+        <property name="resizeAnchor">
+         <enum>QGraphicsView::AnchorViewCenter</enum>
+        </property>
+        <property name="viewportUpdateMode">
+         <enum>QGraphicsView::BoundingRectViewportUpdate</enum>
         </property>
        </widget>
       </item>
@@ -91,9 +134,9 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton">
+         <widget class="QPushButton" name="redrawButton">
           <property name="text">
-           <string>PushButton</string>
+           <string>redraw</string>
           </property>
          </widget>
         </item>
@@ -130,9 +173,22 @@
    <extends>QOpenGLWidget</extends>
    <header location="global">ui/canvas.h</header>
    <slots>
+    <signal>viewRotated(float,float)</signal>
     <slot>allowMovement()</slot>
     <slot>allowSelection()</slot>
     <slot>setZoom()</slot>
+   </slots>
+  </customwidget>
+  <customwidget>
+   <class>FlatStem</class>
+   <extends>QGraphicsView</extends>
+   <header>ui/flat.h</header>
+   <slots>
+    <signal>viewRotated(float,float)</signal>
+    <slot>setZoom(int)</slot>
+    <slot>allowSelection()</slot>
+    <slot>allowMovement()</slot>
+    <slot>redraw()</slot>
    </slots>
   </customwidget>
  </customwidgets>
@@ -182,6 +238,70 @@
     </hint>
     <hint type="destinationlabel">
      <x>295</x>
+     <y>241</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>zoom</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>flatStem</receiver>
+   <slot>setZoom(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>595</x>
+     <y>241</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>440</x>
+     <y>241</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mode_selection</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>flatStem</receiver>
+   <slot>allowSelection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>660</x>
+     <y>196</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>440</x>
+     <y>241</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mode_movement</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>flatStem</receiver>
+   <slot>allowMovement()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>660</x>
+     <y>114</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>440</x>
+     <y>241</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>redrawButton</sender>
+   <signal>pressed()</signal>
+   <receiver>flatStem</receiver>
+   <slot>redraw()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>660</x>
+     <y>363</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>440</x>
      <y>241</y>
     </hint>
    </hints>

@@ -1,11 +1,9 @@
-import array
-
 from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from ui import Ui_MainWindow
-from meristem import Meristem, Bud
-from graph import get_reachable, BudGraph
+from meristem import Bud
+from graph import BudGraph
 
 
 def make_ring(start_angle, height, items, colour):
@@ -57,6 +55,7 @@ class Prog(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        self.connect_views()
 
         # Make a dummy meristem with random buds in different colours
         self.meristem = BudGraph()
@@ -65,12 +64,22 @@ class Prog(QMainWindow):
 
         # set the OpenGL canvas up with the meristem
         self.ui.mainCanvas.add(self.meristem)
-        self.ui.mainCanvas.drawable_selected.connect(self.bud_selected)
 
+        self.ui.flatStem.add(self.meristem)
+        self.ui.flatStem.show()
         # Set a timer to refresh the OpenGL screen every 20ms (50fps)
         timer = QTimer(self)
         timer.timeout.connect(self.ui.mainCanvas.update)
         timer.start(20)
+
+    def connect_views(self):
+        views = [self.ui.flatStem, self.ui.mainCanvas]
+        for view in views:
+            for target in views:
+                view.view_rotated.connect(target.rotate_view)
+                view.refresh_needed.connect(target.redraw)
+
+            view.drawable_selected.connect(self.bud_selected)
 
     def bud_selected(self, bud):
         """Handle a bud being selected. It displays the selected bud's neighbours."""
@@ -88,10 +97,11 @@ class Prog(QMainWindow):
 
         for line in self.meristem.axes(bud):
             for b in self.meristem.on_line(line):
-                b.colours = (1/size, 1 - 1/size, 0.5)
+                b.colours = (1, 1, 0.5)
 
         bud.colours = bud.GREEN
         self.meristem.refresh_field('colours')
+        self.ui.mainCanvas.refresh_needed.emit()
 
 
 def main():

@@ -1,6 +1,6 @@
 import array
 
-from qtpy.QtCore import QObject, Signal
+from qtpy.QtCore import QObject, Signal, Qt
 
 
 class Drawable(QObject):
@@ -45,7 +45,15 @@ class Drawable(QObject):
     def ray_pick_test(self, origin, direction):
         """Return the distance from the given point to its nearest point on this object.
 
-        Negative values mean that there was no intersection.
+        Negative values mean that there was no intersection, otherwise the distance to
+        the closest item.
+        """
+        return -1
+
+    def bounds_test(self, x, y, offset):
+        """Check whether the provided point lies in the bounds of this instance.
+
+        This is a 2D test.
         """
         return -1
 
@@ -163,21 +171,103 @@ class MultiDrawable(Drawable):
         self.colours = self.concat('colours')
         self.points_count = len(self.vertices) / 3
 
+    def _test_intersection(self, func, *args, **kwargs):
+        """Return the distance from this instance to a point.
+
+        Negative values mean that there was no intersection.
+        By default this returns the distance to the nearest object in the whole container.
+
+        :param str func: the name of a test function that can be found in each item
+        """
+        smallest_dist, self.selected = -1, None
+        for obj in self.objects:
+            dist = getattr(obj, func)(*args, **kwargs)
+            if dist > 0 and (dist < smallest_dist or smallest_dist < 0):
+                smallest_dist, self.selected = dist, obj
+        return smallest_dist
+
     def ray_pick_test(self, origin, direction):
         """Return the distance from the given point to its nearest point on this object.
 
         Negative values mean that there was no intersection.
         By default this returns the distance to the nearest object in the whole container.
         """
-        smallest_dist, self.selected = -1, None
-        for obj in self.objects:
-            dist = obj.ray_pick_test(origin, direction)
-            if dist > 0 and (dist < smallest_dist or smallest_dist < 0):
-                smallest_dist, self.selected = dist, obj
-        return smallest_dist
+        return self._test_intersection('ray_pick_test', origin, direction)
+
+    def bounds_test(self, x, y, offset):
+        """Check whether the provided point lies in the bounds of this instance.
+
+        This is a 2D test.
+        """
+        return self._test_intersection('bounds_test', x, y, offset)
 
     def select(self):
         """Select this container - if a single object was selected with the mouse, then select that."""
         if self.selected:
             self.selected = self.selected.select()
         return self.selected
+
+
+class MeristemActions(object):
+    """An interface to unify various ways of displaying meristems.
+
+    The main point of this is for various views to be interconnected so
+    that modifying one view will be reflected in all other ones.
+    """
+    drawable_selected = Signal(Drawable, name="drawableSelected")
+    view_rotated = Signal(float, float, name="viewRotated")
+    refresh_needed = Signal(name="refreshNeeded")
+
+    def __init__(self, *args, **kwargs):
+        super(MeristemActions, self).__init__(*args, **kwargs)
+        self.objects = MultiDrawable([])
+        self.viewing_angle = [0.0, 0.0]
+
+        # set default settings
+        self.can_move_camera = True
+        self.can_select = True
+        self.zoom = 10
+
+    def add(self, drawable):
+        """Add the provided drawable to the list of objects."""
+        self.objects.add(drawable)
+        self.redraw()
+
+    def redraw(self):
+        """Notify the drawer that it should be redrawn."""
+
+    def select(self, event):
+        """Select the item that is under the cursor (if enabled)."""
+
+    def allowSelection(self, state):
+        self.can_select = state
+
+    def allowMovement(self, state):
+        self.can_move_camera = state
+
+    def setZoom(self, value):
+        self.zoom = value
+        self.redraw()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.NoButton:
+            pass
+        elif event.buttons() == Qt.LeftButton:
+            offset = event.pos() - self.mouse_pos
+            self.mouse_pos = event.pos()
+            self.view_rotated.emit(offset.x(), offset.y())
+        elif event.buttons() == Qt.RightButton:
+            pass
+        super(MeristemActions, self).mouseMoveEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.mouse_pos = event.pos()
+            self.select(event)
+        super(MeristemActions, self).mousePressEvent(event)
+
+    def rotate_view(self, x, y):
+        """Rotate the current view by the given values on the respective axes."""
+        if self.can_move_camera:
+            self.viewing_angle = [self.viewing_angle[0] + x, self.viewing_angle[1] + y]
+            self.redraw()
