@@ -6,47 +6,50 @@ from meristem import Bud
 from graph import BudGraph
 
 
-def make_ring(start_angle, height, items, colour):
-    """Make a ring of buds.
-
-    :param float start_angle: how much the ring should be rotated clockwise
-    :param float height: how high up the meristem the ring should be
-    :param int items: how many items to add to the ring
-    :param list colour: the colour of the buds
-    """
-    # calculate the angle between each consecutive bud
-    angle_step = 360.0/items
-
+class Ringer:
     # always use the same radius for all rings - this makes a nice column
-    base_radius = 3.0
-    return [
-        Bud(
-            radius=base_radius,
-            height=height,
-            angle=start_angle + i*angle_step,  # move around the circle by angle_step degrees
-            fill_colour=colour,
-            scale=(base_radius + 2) / items  # scale the bud so that the more there are, the smaller they are
-        ) for i in range(items)
-    ]
+    BASE_RADIUS = 3.0
 
+    def __init__(self, size, colour=(0.0, 0.0, 0.7), start_height=0):
+        self.buds_per_layer = size
+        self.default_colour = colour
+        self.height = start_height
+        self.angle = 0
 
-def make_buds(layers, size, colour, height=0):
-    """Make a couple of layers of buds.
+    def make_ring(self, colour=None):
+        """Make a ring of buds.
 
-    :param int layers: how many layers should be added
-    :param int size: how many buds per layer.
-    :param list colour: the colour of the created buds
-    :param float height: the initial height of the layer
-    """
-    buds = []
-    scale = 3 / size
-    for i in range(layers):
+        :param list colour: the colour of the buds
+        """
+        # calculate the angle between each consecutive bud
+        angle_step = 360.0/self.buds_per_layer
         # step around by this many degrees
-        angle = i * 30.0/size
         # the offset is scaled so that the layers "fit in" to each other
-        layer_height = height + i * scale * 1
-        buds += make_ring(start_angle=angle, height=layer_height, items=size, colour=colour)
-    return buds
+        self.angle = self.angle + 150.0/self.buds_per_layer
+
+        scale = self.BASE_RADIUS / self.buds_per_layer
+        self.height = self.height + scale * 1.5
+
+        return [
+            Bud(
+                radius=self.BASE_RADIUS,
+                height=self.height,
+                angle=self.angle + i*angle_step,  # move around the circle by angle_step degrees
+                fill_colour=colour or self.default_colour,
+                scale=(self.BASE_RADIUS + 2) / self.buds_per_layer  # scale the bud so that the more there are, the smaller they are
+            ) for i in range(self.buds_per_layer)
+        ]
+
+
+    def make_buds(self, layers):
+        """Make a couple of layers of buds.
+
+        :param int layers: how many layers should be added
+        """
+        buds = []
+        for i in range(layers):
+            buds += self.make_ring()
+        return buds
 
 
 class Prog(QMainWindow):
@@ -56,10 +59,13 @@ class Prog(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.connect_views()
+        self.ringer = Ringer(15, (0.0, 0.0, 0.7), -1)
+
+        self.ui.pushButton_2.pressed.connect(self.add_ring)
 
         # Make a dummy meristem with random buds in different colours
         self.meristem = BudGraph()
-        buds = make_buds(20, 15, (0.0, 0.0, 0.7), height=1)
+        buds = self.ringer.make_buds(20)
         self.meristem.add(*buds)
 
         # set the OpenGL canvas up with the meristem
@@ -71,6 +77,12 @@ class Prog(QMainWindow):
         timer = QTimer(self)
         timer.timeout.connect(self.ui.mainCanvas.update)
         timer.start(20)
+
+    def add_ring(self):
+        buds = self.ringer.make_ring(colour=(0.7, 0, 0.1))
+        self.meristem.add(*buds)
+        self.ui.flatStem.register_refresh(buds)
+        self.ui.mainCanvas.register_refresh(buds)
 
     def connect_views(self):
         views = [self.ui.flatStem, self.ui.mainCanvas]

@@ -130,10 +130,14 @@ class MultiDrawable(Drawable):
         self.objects = []
         self.add(*objects)
 
-    def add(self, *items):
-        """Append the provided items to the list of items."""
+    def register_refresh(self, items):
         for item in items:
             item.needsRefresh.connect(self.refresh_field)
+        self.calculate_lists()
+
+    def add(self, *items):
+        """Append the provided items to the list of items."""
+        self.register_refresh(items)
         self.objects += items
         self.calculate_lists()
 
@@ -231,6 +235,9 @@ class MeristemActions(object):
     def add(self, drawable):
         """Add the provided drawable to the list of objects."""
         self.objects.add(drawable)
+
+    def register_refresh(self, items):
+        self.objects.register_refresh(items)
         self.redraw()
 
     def redraw(self):
