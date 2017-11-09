@@ -3,10 +3,10 @@ import math
 from qtpy.QtWidgets import QOpenGLWidget
 from qtpy.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGLVersionProfile, QVector3D
 
-from ui.drawables import MultiDrawable, MeristemActions
+from ui.drawables import MultiDrawable, MeristemDisplay
 
 
-class OGLCanvas(MeristemActions, QOpenGLWidget):
+class OGLCanvas(MeristemDisplay, QOpenGLWidget):
     """A class to handle displaying OpenGL things on the screen."""
     PERSPECTIVE = (60, 0.1, 120.0)
     """The perspective matrix settings (angle, nearZ, farZ)"""
@@ -164,4 +164,4 @@ class OGLCanvas(MeristemActions, QOpenGLWidget):
             self.objects.select()
 
         # signal all and any slots that something new was selected
-        self.drawable_selected.emit(self.objects.selected)
+        self._signal_selected()

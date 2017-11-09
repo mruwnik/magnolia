@@ -2,6 +2,8 @@ import array
 
 from qtpy.QtCore import QObject, Signal, Qt
 
+from ui.signals import signaler
+
 
 class Drawable(QObject):
     """This represents something that can be rendered by OpenGL."""
@@ -45,7 +47,7 @@ class Drawable(QObject):
     def ray_pick_test(self, origin, direction):
         """Return the distance from the given point to its nearest point on this object.
 
-        Negative values mean that there was no intersection, otherwise the distance to
+        Negative values mean that there was no intersdrawection, otherwise the distance to
         the closest item.
         """
         return -1
@@ -79,7 +81,7 @@ class MeshDrawable(Drawable):
     """A container for a model mesh."""
 
     def __init__(self, mesh, offset=None, scale=1, fill_colour=None, colours=None):
-        """Initialise the object, setting the colour to light gray.
+        """Initialise the object, setting the colour to light gray if not provided.
 
         :param MeshData mesh: the mesh to be rendered.
         :param [x, y, z] offset: the whole mesh will be translated by the given values
@@ -98,7 +100,7 @@ class MeshDrawable(Drawable):
 
     @property
     def offset(self):
-        """Get this objects offset from the origin."""
+        """Get this object's offset from the origin."""
         return self._offset
 
     @property
@@ -128,35 +130,44 @@ class MultiDrawable(Drawable):
 
         self.selected = []
         self.objects = []
+        self.calculate_lists()
         self.add(*objects)
+
+    def items(self):
+        return self.objects
 
     def register_refresh(self, items):
         for item in items:
             item.needsRefresh.connect(self.refresh_field)
-        self.calculate_lists()
 
     def add(self, *items):
         """Append the provided items to the list of items."""
         self.register_refresh(items)
         self.objects += items
-        self.calculate_lists()
 
-    def concat(self, field):
+        # refresh the vertices etc., but don't recalculate previous ones (to save time)
+        self._vertices = self._vertices + self.concat('vertices', items)
+        self.normals = self.normals + self.concat('normals', items)
+        self.colours = self.colours + self.concat('colours', items)
+        self.points_count = len(self.vertices) / 3
+
+    def concat(self, field, objects):
         """Return a float array containing all the values found in the given field.
 
         :param str field: the name of the property to be accessed
+        :param list objects: the objects to be concatenated
         """
         values = array.array('f', [])
-        for obj in self.objects:
+        for obj in objects:
             values += getattr(obj, field)
         return values
 
-    def refresh_field(self, field):
+    def refresh_field(self, field=None):
         """Refresh the given field + notify any listeners that the data is stale."""
         if not field:
             self.calculate_lists()
         else:
-            setattr(self, field, self.concat(field))
+            setattr(self, field, self.concat(field, self.objects))
 
         if field == 'vertices':
             self.points_count = len(self.vertices) / 3
@@ -168,11 +179,11 @@ class MultiDrawable(Drawable):
         """Calculate lists of data to be rendered.
 
         This is as an optimalisation - the operations are very slow,
-        and only needed when new data is added, so it might as well be buffored.
+        and only needed when new data is added, so it might as well be buffered.
         """
-        self._vertices = self.concat('vertices')
-        self.normals = self.concat('normals')
-        self.colours = self.concat('colours')
+        self._vertices = self.concat('vertices', self.items())
+        self.normals = self.concat('normals', self.items())
+        self.colours = self.concat('colours', self.items())
         self.points_count = len(self.vertices) / 3
 
     def _test_intersection(self, func, *args, **kwargs):
@@ -212,19 +223,16 @@ class MultiDrawable(Drawable):
         return self.selected
 
 
-class MeristemActions(object):
+class MeristemDisplay(object):
     """An interface to unify various ways of displaying meristems.
 
     The main point of this is for various views to be interconnected so
     that modifying one view will be reflected in all other ones.
     """
-    drawable_selected = Signal(Drawable, name="drawableSelected")
-    view_rotated = Signal(float, float, name="viewRotated")
-    refresh_needed = Signal(name="refreshNeeded")
 
     def __init__(self, *args, **kwargs):
-        super(MeristemActions, self).__init__(*args, **kwargs)
-        self.objects = MultiDrawable([])
+        super(MeristemDisplay, self).__init__(*args, **kwargs)
+        self._objects = MultiDrawable([])
         self.viewing_angle = [0.0, 0.0]
 
         # set default settings
@@ -232,19 +240,35 @@ class MeristemActions(object):
         self.can_select = True
         self.zoom = 10
 
+        # set slots
+        signaler.view_rotated.connect(self.rotate_view)
+        signaler.refresh_needed.connect(self.redraw)
+
+    @property
+    def objects(self):
+        return self._objects
+
+    @objects.setter
+    def objects(self, new_objs):
+        self._objects = new_objs
+        self.redraw()
+
+    def items(self):
+        return self.objects.items()
+
     def add(self, drawable):
         """Add the provided drawable to the list of objects."""
         self.objects.add(drawable)
-
-    def register_refresh(self, items):
-        self.objects.register_refresh(items)
-        self.redraw()
 
     def redraw(self):
         """Notify the drawer that it should be redrawn."""
 
     def select(self, event):
         """Select the item that is under the cursor (if enabled)."""
+
+    def _signal_selected(self):
+        """Send a message to any listeners that this object was selected."""
+        signaler.drawable_selected.emit(self.objects.selected)
 
     def allowSelection(self, state):
         self.can_select = state
@@ -262,16 +286,16 @@ class MeristemActions(object):
         elif event.buttons() == Qt.LeftButton:
             offset = event.pos() - self.mouse_pos
             self.mouse_pos = event.pos()
-            self.view_rotated.emit(offset.x(), offset.y())
+            signaler.view_rotated.emit(offset.x(), offset.y())
         elif event.buttons() == Qt.RightButton:
             pass
-        super(MeristemActions, self).mouseMoveEvent(event)
+        super(MeristemDisplay, self).mouseMoveEvent(event)
 
     def mousePressEvent(self, event):
         if event.button() == Qt.LeftButton:
             self.mouse_pos = event.pos()
             self.select(event)
-        super(MeristemActions, self).mousePressEvent(event)
+        super(MeristemDisplay, self).mousePressEvent(event)
 
     def rotate_view(self, x, y):
         """Rotate the current view by the given values on the respective axes."""

@@ -1,7 +1,7 @@
 from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
-from ui import Ui_MainWindow
+from ui import Ui_MainWindow, signaler
 from meristem import Bud
 from graph import BudGraph
 
@@ -69,9 +69,9 @@ class Prog(QMainWindow):
         self.meristem.add(*buds)
 
         # set the OpenGL canvas up with the meristem
-        self.ui.mainCanvas.add(self.meristem)
+        self.ui.mainCanvas.objects = self.meristem
 
-        self.ui.flatStem.add(self.meristem)
+        self.ui.flatStem.objects = self.meristem
         self.ui.flatStem.show()
         # Set a timer to refresh the OpenGL screen every 20ms (50fps)
         timer = QTimer(self)
@@ -81,17 +81,10 @@ class Prog(QMainWindow):
     def add_ring(self):
         buds = self.ringer.make_ring(colour=(0.7, 0, 0.1))
         self.meristem.add(*buds)
-        self.ui.flatStem.register_refresh(buds)
-        self.ui.mainCanvas.register_refresh(buds)
+        signaler.refresh_needed.emit()
 
     def connect_views(self):
-        views = [self.ui.flatStem, self.ui.mainCanvas]
-        for view in views:
-            for target in views:
-                view.view_rotated.connect(target.rotate_view)
-                view.refresh_needed.connect(target.redraw)
-
-            view.drawable_selected.connect(self.bud_selected)
+        signaler.drawable_selected.connect(self.bud_selected)
 
     def bud_selected(self, bud):
         """Handle a bud being selected. It displays the selected bud's neighbours."""
@@ -113,7 +106,7 @@ class Prog(QMainWindow):
 
         bud.colours = bud.GREEN
         self.meristem.refresh_field('colours')
-        self.ui.mainCanvas.refresh_needed.emit()
+        signaler.refresh_needed.emit()
 
 
 def main():

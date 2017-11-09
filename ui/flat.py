@@ -4,10 +4,10 @@ import qtpy.QtGui
 from qtpy.QtGui import QPen, QBrush
 from qtpy.QtCore import Qt, QPoint
 from qtpy.QtWidgets import QGraphicsView, QGraphicsScene
-from ui.drawables import MeristemActions
+from ui.drawables import MeristemDisplay
 
 
-class FlatStem(MeristemActions, QGraphicsView):
+class FlatStem(MeristemDisplay, QGraphicsView):
 
     def __init__(self, *args, **kwargs):
         self.scene = QGraphicsScene()
@@ -41,9 +41,8 @@ class FlatStem(MeristemActions, QGraphicsView):
             self.scene.removeItem(item)
 
         # Draw all buds
-        for obj in self.objects.objects:
-            for bud in obj.objects:
-                self.make_item(bud)
+        for bud in self.objects.items():
+            self.make_item(bud)
 
         # Draw the bounding lines of the meristem
         side_bar = self.thin_line(Qt.blue)
@@ -66,4 +65,4 @@ class FlatStem(MeristemActions, QGraphicsView):
             self.objects.select()
 
         # signal all and any slots that something new was selected
-        self.drawable_selected.emit(self.objects.selected)
+        self._signal_selected()

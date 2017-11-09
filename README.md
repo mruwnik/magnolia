@@ -78,18 +78,22 @@ A single bud. Currently it's just a coloured sphere. The sphere mesh is read in 
  * height - the buds vertical position along the meristem. The bottom is 0, the closer the apex, the larger the value
  * scale - how much the underlying model should be scaled. Sphere.obj has a radius of more or less 0.5. This option sets the size of the bud
  * fill_colour - the colour of the bud (until decent textures are introduced)
- 
+
  Functions:
- 
+
  * `offset` - the postion of the bud on the X-Z plane, as opposed to an angle and radius. They convey the same information, but in a different manner.
  * `select` - select the given bud. This doesn't really do anything, it's more for subclassing
- 
+
  ## Phyllotaxy
  Currently there are no decent algorithms implemented, just basic ring functions - see `make_ring` and `make_buds` in `main.py`
- 
- 
+
+
  # TODO
- 
+
  * The most interesting part - i.e. the actual simulation of how things grow
  * Installers for windows so this can be installed on normal peoples computers
  * a decent UI
+
+# FIXES
+
+ * Don't recalculate whole meristems when just adding a few points
