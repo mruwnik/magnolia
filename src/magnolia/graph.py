@@ -1,6 +1,6 @@
 import math
 
-from meristem import Bud, Meristem
+from magnolia.meristem import Bud, Meristem
 
 
 def linear_function(b1, b2):

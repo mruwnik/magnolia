@@ -152,7 +152,7 @@
      <x>0</x>
      <y>0</y>
      <width>723</width>
-     <height>22</height>
+     <height>19</height>
     </rect>
    </property>
   </widget>
@@ -171,7 +171,7 @@
   <customwidget>
    <class>OGLCanvas</class>
    <extends>QOpenGLWidget</extends>
-   <header location="global">ui/canvas.h</header>
+   <header location="global">magnolia/ui/canvas.h</header>
    <slots>
     <signal>viewRotated(float,float)</signal>
     <slot>allowMovement()</slot>
@@ -182,7 +182,7 @@
   <customwidget>
    <class>FlatStem</class>
    <extends>QGraphicsView</extends>
-   <header>ui/flat.h</header>
+   <header>magnolia/ui/flat.h</header>
    <slots>
     <signal>viewRotated(float,float)</signal>
     <slot>setZoom(int)</slot>

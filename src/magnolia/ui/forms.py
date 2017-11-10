@@ -116,5 +116,5 @@ class Ui_MainWindow(object):
         self.pushButton_2.setText(_translate("MainWindow", "PushButton"))
         self.redrawButton.setText(_translate("MainWindow", "redraw"))
 
-from ui.canvas import OGLCanvas
-from ui.flat import FlatStem
+from magnolia.ui.canvas import OGLCanvas
+from magnolia.ui.flat import FlatStem

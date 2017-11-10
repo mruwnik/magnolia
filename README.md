@@ -55,7 +55,7 @@ This should result in PyCharm seeing the project
 # UI modifications
 Use QTCreator. There is a ready project in the `ui` folder - open that with qtcreator and you should be good to go. Once you've changed what you want to be changed, make sure to convert `mainwindow.ui` into python classes. To do so execute the following:
 
-    pyuic5 ui/mainwindow.ui > ui/forms.py
+    pyuic5 ui/mainwindow.ui > src/magnolia/ui/forms.py
 
 Don't make any changes to the `forms.py` file, as it is overwritten every time. See the `Prog` class in [main.py](https://github.com/mruwnik/magnolia/blob/master/main.py#L53), or the end of the [canvas.py](https://github.com/mruwnik/magnolia/blob/master/ui/canvas.py#L181) file to see how widgets can be used. The easiest way is using slots. This amounts to connecting widgets to functions in QtCreator, and then simply adding a function in the appropriate class. For more info check the `allowSelection` or `allowMovement` functions in the `OGLCanvas` class.
 
@@ -71,7 +71,7 @@ Functions:
 * `refresh_field` - recalculate only the data for the given field (e.g. colour data)
 
 ## Bud
-A single bud. Currently it's just a coloured sphere. The sphere mesh is read in from a file, so changing what is displayed should just amount to replacing [ui/models/sphere.obj](https://github.com/mruwnik/magnolia/blob/master/ui/models/sphere.obj) with a different *.obj model. Each bud is characterised by the following parameters:
+A single bud. Currently it's just a coloured sphere. The sphere mesh is read in from a file, so changing what is displayed should just amount to replacing [magnolia/ui/models/sphere.obj](https://github.com/mruwnik/magnolia/blob/master/ui/models/sphere.obj) with a different *.obj model. Each bud is characterised by the following parameters:
 
  * radius - how far away it is from the meristems main axis. This should be roughly the same for all buds, unless they are at the apex, in which case the radius should be smaller
  * angle - how far the bud is rotated clockwise around the meristem axis (in degrees)

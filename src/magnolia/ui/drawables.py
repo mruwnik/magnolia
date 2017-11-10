@@ -2,7 +2,7 @@ import array
 
 from qtpy.QtCore import QObject, Signal, Qt
 
-from ui.signals import signaler
+from magnolia.ui.signals import signaler
 
 
 class Drawable(QObject):

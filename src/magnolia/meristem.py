@@ -4,7 +4,7 @@ from itertools import count
 
 from PyQt5.QtGui import QVector3D
 
-from ui import MultiDrawable, MeshDrawable, OBJReader
+from magnolia.ui import MultiDrawable, MeshDrawable, OBJReader
 
 
 def solve_quadratic(a, b, c):

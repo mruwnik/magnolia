@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 
-packages = find_packages()
+packages = find_packages('src')
 
 setup(
     name='magnolia',
@@ -10,6 +10,7 @@ setup(
     author='Daniel O\'Connell',
     author_email='tojad99@gmail.com',
     packages=packages,
+    package_dir={'': 'src'},
     install_requires=[
         'ipython',
         'qtpy==1.2.1',
@@ -27,6 +28,6 @@ setup(
             'magnolia = tests.pytest_plugin',
         ],
         # this is totally incorrect, but it's just as a reminder of how it's done
-        # 'forms': ['pyuic5 ui/mainwindow.ui > ui/forms.py']
+        # 'forms': ['pyuic5 ui/mainwindow.ui > src/magnolia/ui/forms.py']
     },
 )

@@ -1,9 +1,9 @@
 from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
-from ui import Ui_MainWindow, signaler
-from meristem import Bud
-from graph import BudGraph
+from magnolia.ui import Ui_MainWindow, signaler
+from magnolia.meristem import Bud
+from magnolia.graph import BudGraph
 
 
 class Ringer:

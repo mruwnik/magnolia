@@ -1,9 +1,10 @@
 import math
 
+from path import Path
 from qtpy.QtWidgets import QOpenGLWidget
 from qtpy.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGLVersionProfile, QVector3D
 
-from ui.drawables import MultiDrawable, MeristemDisplay
+from magnolia.ui.drawables import MultiDrawable, MeristemDisplay
 
 
 class OGLCanvas(MeristemDisplay, QOpenGLWidget):
@@ -28,7 +29,8 @@ class OGLCanvas(MeristemDisplay, QOpenGLWidget):
 
     def initializeGL(self):
         version = QOpenGLVersionProfile()
-        self._load_program('ui/shaders/vshader.glsl', 'ui/shaders/fshader.glsl')
+        ui_dir = Path(__file__).parent
+        self._load_program(ui_dir/'shaders/vshader.glsl', ui_dir/'shaders/fshader.glsl')
 
         # FIXME: this should check which versions are available and then apply the appropriate one
         version.setVersion(2, 0)

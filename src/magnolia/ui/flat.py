@@ -4,7 +4,7 @@ import qtpy.QtGui
 from qtpy.QtGui import QPen, QBrush
 from qtpy.QtCore import Qt, QPoint
 from qtpy.QtWidgets import QGraphicsView, QGraphicsScene
-from ui.drawables import MeristemDisplay
+from magnolia.ui.drawables import MeristemDisplay
 
 
 class FlatStem(MeristemDisplay, QGraphicsView):
