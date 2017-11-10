@@ -1,6 +1,6 @@
 import math
 
-from magnolia.meristem import Bud, Meristem
+from magnolia.meristem import Meristem
 
 
 def linear_function(b1, b2):
@@ -8,7 +8,6 @@ def linear_function(b1, b2):
     if not b1.angle2x(b2.angle - b1.angle):
         return lambda bud: bud.height if bud.angle == b1.angle else 100 - bud.height
     m = (b2.height - b1.height) / b1.angle2x(b2.angle - b1.angle)
-    x = b1.height - b2.height
     return lambda bud: m * bud.angle2x(bud.angle - b1.angle) + b1.height
 
 
@@ -53,12 +52,16 @@ def inner_tangents(b1, b2):
     y1 = ((r**2) * (yp - b) - r * worldxp * sqrd) / absd + b
     y2 = ((r**2) * (yp - b) + r * worldxp * sqrd) / absd + b
 
-    left = lambda b: ((yp - y1) * b.angle2x(b.angle - b1.angle - x1)) / b.angle2x(xp - x1) + y1
-    right = lambda b: ((yp - y2) * b.angle2x(b.angle - b1.angle - x2)) / b.angle2x(xp - x2) + y2
+    def left(b):
+        return ((yp - y1) * b.angle2x(b.angle - b1.angle - x1)) / b.angle2x(xp - x1) + y1
+
+    def right(b):
+        return ((yp - y2) * b.angle2x(b.angle - b1.angle - x2)) / b.angle2x(xp - x2) + y2
+
     return left, right
 
 
-def get_reachable(selected, buds):
+def get_reachable(selected, buds):  # noqa
     """Filter the given buds for all that can be accessed by the selected bud without collisions.
 
     :param Bud selected: The selected bud

@@ -34,12 +34,13 @@ class Ringer:
             Bud(
                 radius=self.BASE_RADIUS,
                 height=self.height,
-                angle=self.angle + i*angle_step,  # move around the circle by angle_step degrees
+                # move around the circle by angle_step degrees
+                angle=self.angle + i*angle_step,
                 fill_colour=colour or self.default_colour,
-                scale=(self.BASE_RADIUS + 2) / self.buds_per_layer  # scale the bud so that the more there are, the smaller they are
+                # scale the bud so that the more there are, the smaller they are
+                scale=(self.BASE_RADIUS + 2) / self.buds_per_layer
             ) for i in range(self.buds_per_layer)
         ]
-
 
     def make_buds(self, layers):
         """Make a couple of layers of buds.
