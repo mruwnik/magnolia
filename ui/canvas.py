@@ -109,7 +109,7 @@ class OGLCanvas(MeristemDisplay, QOpenGLWidget):
         self.program.setUniformValue(self.norm_matrixUniform, self.mv_matrix.inverted()[0])
         self.program.setUniformValue(self.p_matrixUniform, self.p_matrix)
 
-        if self.objects.objects:
+        if self.displayables:
             self.loadAttrArray(self.m_posAttr, self.objects.vertices)
             self.loadAttrArray(self.m_colAttr, self.objects.colours)
             self.loadAttrArray(self.m_normAttr, self.objects.normals)

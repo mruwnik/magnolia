@@ -1,3 +1,6 @@
+"""Group signals and signal handlers. There is a `signaler` instance defined here
+ that is used to coordinate a meristem with all various displays.
+"""
 from qtpy.QtCore import QObject, Signal
 
 

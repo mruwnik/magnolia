@@ -8,18 +8,20 @@ from ui.drawables import MeristemDisplay
 
 
 class FlatStem(MeristemDisplay, QGraphicsView):
+    """A QTGraphics canvas to display a 2D (rolled out) view of a meristem."""
 
     def __init__(self, *args, **kwargs):
         self.scene = QGraphicsScene()
         super(FlatStem, self).__init__(self.scene, *args, **kwargs)
 
     def thin_line(self, colour=None):
+        """Return a pen that draws a thin line in the given colour."""
         pen = QPen(colour) if colour else QPen()
         pen.setWidth(0)
         return pen
 
     def make_item(self, bud):
-        """Add the given bud to the scene."""
+        """Add the given bud to the scene as a ball."""
         item = self.scene.addEllipse(
             bud.angle2x(bud.angle + math.radians(self.viewing_angle[0])) - bud.scale, -bud.height - bud.scale,
             bud.scale * 2, bud.scale * 2,
@@ -41,12 +43,12 @@ class FlatStem(MeristemDisplay, QGraphicsView):
             self.scene.removeItem(item)
 
         # Draw all buds
-        for bud in self.objects.items():
+        for bud in self.displayables:
             self.make_item(bud)
 
         # Draw the bounding lines of the meristem
         side_bar = self.thin_line(Qt.blue)
-        for meristem in self.objects.objects:
+        for meristem in self.displayables:
             side_bar_pos = math.pi * meristem.radius
             self.scene.addLine(-side_bar_pos, 1, -side_bar_pos, -meristem.height - 2, side_bar)
             self.scene.addLine(side_bar_pos, 1, side_bar_pos, -meristem.height - 2, side_bar)

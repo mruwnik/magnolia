@@ -47,7 +47,7 @@ class Drawable(QObject):
     def ray_pick_test(self, origin, direction):
         """Return the distance from the given point to its nearest point on this object.
 
-        Negative values mean that there was no intersdrawection, otherwise the distance to
+        Negative values mean that there was no intersection, otherwise the distance to
         the closest item.
         """
         return -1
@@ -133,10 +133,12 @@ class MultiDrawable(Drawable):
         self.calculate_lists()
         self.add(*objects)
 
-    def items(self):
+    @property
+    def displayables(self):
         return self.objects
 
     def register_refresh(self, items):
+        """Make sure this collection gets a refresh signal whenever one of the items changes."""
         for item in items:
             item.needsRefresh.connect(self.refresh_field)
 
@@ -181,22 +183,23 @@ class MultiDrawable(Drawable):
         This is as an optimalisation - the operations are very slow,
         and only needed when new data is added, so it might as well be buffered.
         """
-        self._vertices = self.concat('vertices', self.items())
-        self.normals = self.concat('normals', self.items())
-        self.colours = self.concat('colours', self.items())
+        self._vertices = self.concat('vertices', self.displayables)
+        self.normals = self.concat('normals', self.displayables)
+        self.colours = self.concat('colours', self.displayables)
         self.points_count = len(self.vertices) / 3
 
-    def _test_intersection(self, func, *args, **kwargs):
+    def _test_intersection(self, test_func, *args, **kwargs):
         """Return the distance from this instance to a point.
 
         Negative values mean that there was no intersection.
         By default this returns the distance to the nearest object in the whole container.
+        As a side effect, the nearest object can be found at self.selected
 
-        :param str func: the name of a test function that can be found in each item
+        :param str test_func: the name of a test function that can be found in each item
         """
         smallest_dist, self.selected = -1, None
         for obj in self.objects:
-            dist = getattr(obj, func)(*args, **kwargs)
+            dist = getattr(obj, test_func)(*args, **kwargs)
             if dist > 0 and (dist < smallest_dist or smallest_dist < 0):
                 smallest_dist, self.selected = dist, obj
         return smallest_dist
@@ -246,15 +249,19 @@ class MeristemDisplay(object):
 
     @property
     def objects(self):
+        """Get all objects in the displayer."""
         return self._objects
 
     @objects.setter
     def objects(self, new_objs):
+        """Replace the current objects with the provided ones and redraw the display."""
         self._objects = new_objs
         self.redraw()
 
-    def items(self):
-        return self.objects.items()
+    @property
+    def displayables(self):
+        """Get all displayable items in this MeristemDisplay."""
+        return self.objects.displayables
 
     def add(self, drawable):
         """Add the provided drawable to the list of objects."""
