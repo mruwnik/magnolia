@@ -7,8 +7,15 @@ from PyQt5.QtGui import QVector3D
 from magnolia.ui import MultiDrawable, MeshDrawable, OBJReader
 
 
+class MathError(ValueError):
+    """Raised when a bad mathematic operation is used."""
+
+
 def solve_quadratic(a, b, c):
     """Return all solutions for the given quadratic equation."""
+    if not a:
+        raise MathError('not a quatratic (%s, %s, %s)' % (a, b, c))
+
     discr = b * b - 4 * a * c
     if discr < 0:
         return None, None
