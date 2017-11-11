@@ -1,6 +1,8 @@
+import math
+
 import pytest
 
-from magnolia.positioners import Positioner
+from magnolia.positioners import Positioner, AnglePositioner
 
 
 def test_new():
@@ -103,3 +105,34 @@ def test_reposition_index(index):
         assert bud.height == 1
         assert bud.angle == 0
         assert bud.scale == 1
+
+
+@pytest.mark.parametrize('angle, per_row, angle_step, lat_step', (
+    (30, 2, 90, 180),
+    (30, 6, 30, 60),
+    (30, 36, 5, 10),
+
+    (45, 12, 21.213203, 42.426406),
+    (45, 8, 31.8198051, 63.639610),
+))
+def test_calc_steps_lateral(angle, per_row, angle_step, lat_step):
+    """Check whether lateral angles are correctly calculated."""
+    poser = AnglePositioner(math.radians(angle), per_row)
+    assert math.degrees(poser.lat_step) == pytest.approx(lat_step)
+    assert math.degrees(poser.angle_step) == pytest.approx(angle_step)
+
+
+@pytest.mark.parametrize('angle, per_row, result_angles', (
+    (30, 6, [
+        1.0471975511965976, 2.0943951023931953, 3.141592653589793, 4.1887902047863905, 5.235987755982988,
+        6.283185307179585, 0.5235987755982987, 1.5707963267948963, 2.617993877991494, 3.6651914291880914
+    ]),
+    (45, 8, [
+        1.1107207345395915, 2.221441469079183, 3.3321622036187746, 4.442882938158366, 5.553603672697958,
+        0.5553603672697958, 1.6660811018093873, 2.776801836348979, 3.8875225708885703, 4.998243305428161
+    ])
+))
+def test_angle_next_pos(angle, per_row, result_angles):
+    """Check whether correct angles are returned."""
+    poser = AnglePositioner(math.radians(angle), per_row)
+    assert [poser._next_pos()[0] for _ in range(10)] == result_angles
