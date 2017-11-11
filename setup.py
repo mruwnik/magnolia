@@ -18,15 +18,12 @@ setup(
     ],
     tests_require=[
         'pytest==2.7.3',
-        'pylama==6.3.4',
+        'pylama==7.4.3',
         'pylama_pylint==2.0.0',
         'pylint==1.4.4',
         'hypothesis==3.1.0',
     ],
     entry_points={
-        'pytest11': [
-            'magnolia = tests.pytest_plugin',
-        ],
         # this is totally incorrect, but it's just as a reminder of how it's done
         # 'forms': ['pyuic5 ui/mainwindow.ui > src/magnolia/ui/forms.py']
     },
