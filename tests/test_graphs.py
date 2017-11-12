@@ -101,7 +101,7 @@ def test_line_distance_check(b1, b2, b3, dist):
 @pytest.mark.parametrize('bud, is_in', (
     (make_bud(2, 0, 0), True),  # along the axis
 
-    (make_bud(2, 2.9999, 0, scale=1), True),  # just under the cone
+    (make_bud(2, 1.99999, 0, scale=1), True),  # just under the cone
     (make_bud(2, 3, 0, scale=1), False),  # on the cone
 
     # angle wrapping
@@ -121,7 +121,7 @@ def test_in_cone_checker(bud, is_in):
 @pytest.mark.parametrize('tip, dir_vec, r, h', (
     # cones pointing directly up at it
     ((math.pi/2, 0, 3), (0, 1, 0), 3/2.0, 0.5),
-    ((math.pi/2, -1, 3), (0, 2, 0), 1.5, 1),
+    ((math.pi/2, -1, 3), (0, 2, 0), 2, 1),
     ((math.pi/2, -1, 3), (0, 1, 0), 0.1, 1),  # a really thin cone
 
     # cones pointing from various directions

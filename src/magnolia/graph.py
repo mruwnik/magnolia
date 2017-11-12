@@ -74,14 +74,14 @@ def in_cone_checker(tip, dir_vec, r, h):
     def in_cone(bud):
         """Return whether the given bud totally fits in the cone."""
         diff = (bud.norm_angle(bud.angle - tx), bud.height - ty, bud.radius - tz)
+
         cone_dist = dot_product(diff, dir_vec)
         if cone_dist < 0:
             return False
 
         radius = r * cone_dist / h
-
         orth_dist = length(vect_diff(diff, vect_mul(dir_vec, cone_dist)))
-        return orth_dist < radius + bud.scale
+        return orth_dist < radius
 
     return in_cone
 
@@ -100,6 +100,19 @@ def middle_point(b1, b2):
         b1.height + d1 * normed_dir[1],
         b1.radius + d1 * normed_dir[2],
     )
+
+
+def occlusion_cone(b1, b2):
+    """Return a function that tests whether a given bud lies in the occlusion cone behind b2 from b1."""
+    dir_vector = (b1.norm_angle(b2.angle - b1.angle), b2.height - b1.height, b2.radius - b1.radius)
+    apex = middle_point(b1, b2)
+
+    # because of the overwrapping of angles, there is a degenerative case when the cone lies on the angle axis
+    if dir_vector[1] == 0 and dir_vector[2] == 0:
+        h = length((b1.norm_angle(b2.angle - apex[0]), b2.height - apex[1], b2.radius - apex[2]))
+    else:
+        h = length(vect_diff((b2.angle, b2.height, b2.radius), apex))
+    return in_cone_checker(apex, dir_vector, b2.radius, h)
 
 
 def linear_function(b1, b2):
