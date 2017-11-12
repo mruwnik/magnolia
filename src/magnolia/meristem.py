@@ -62,6 +62,9 @@ class Bud(MeshDrawable):
         kwargs.pop('offset', None)
         super(Bud, self).__init__(*args, **kwargs)
 
+    def __repr__(self):
+        return '<Bud (angle=%s, height=%s, radius=%s, scale=%s)' % (self.angle, self.height, self.radius, self.scale)
+
     @property
     def offset(self):
         """Calculate the buds offset from the meristems origin.

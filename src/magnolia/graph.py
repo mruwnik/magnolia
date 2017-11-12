@@ -3,6 +3,39 @@ import math
 from magnolia.meristem import Meristem
 
 
+def dot_product(v1, v2):
+    """Calculate the dot products of the provided vectors.
+
+    If the vectors have different lengths, the extra values will be discarded from the longer one.
+    """
+    return sum(i*j for i, j in zip(v1, v2))
+
+
+def vect_diff(v1, v2):
+    """Subtract the provided vectors from each other.
+
+    If the vectors have different lengths, the extra values will be discarded from the longer one.
+    """
+    return [i - j for i, j in zip(v1, v2)]
+
+
+def vect_mul(v, scalar):
+    """Multiply the vector by the scalar."""
+    return [i * scalar for i in v]
+
+
+def cross_product(v1, v2):
+    """Return the cross product of the provided 3D vectors."""
+    ax, ay, az = v1
+    bx, by, bz = v2
+
+    i = ay * bz - az * by
+    j = az * bx - ax * bz
+    k = ax * by - ay * bx
+
+    return (i, j, k)
+
+
 def length(vector):
     """Return the length of the provided vector."""
     return math.sqrt(sum(i**2 for i in vector))
@@ -11,20 +44,46 @@ def length(vector):
 def line_distance_check(b1, b2):
     """Return a function that calculates the distance from a line between the provided buds."""
     # the direction vector between the buds
-    a, b, c = b1.norm_angle(b1.angle - b2.angle), b1.height - b2.height, b1.radius - b2.radius
+    dir_vector = (b1.norm_angle(b1.angle - b2.angle), b1.height - b2.height, b1.radius - b2.radius)
 
     def checker(bud):
         # the diff between b1 and bud
-        xd, yd, zd = bud.norm_angle(bud.angle - b1.angle), bud.height - b1.height, bud.radius - b1.radius
+        diff = (bud.norm_angle(bud.angle - b1.angle), bud.height - b1.height, bud.radius - b1.radius)
 
-        # the cross product of the diff x dir_vector
-        i = yd * c - zd * b
-        j = xd * c - zd * a
-        k = xd * b - yd * a
-
-        return length((i, j, k))/length((a, b, c))
+        return length(cross_product(diff, dir_vector)) / length(dir_vector)
 
     return checker
+
+
+def in_cone_checker(tip, dir_vec, r, h):
+    """
+    Return a function that checks whether a bud is in the provided cone.
+
+    The `r` and `h` params describe a sample base - in reality the cone is assumed to be
+    infinite. For use in occlusion checks, `tip` should be where the inner tangents of the
+    checked bud meet, `dir_vec` should be the vector between them, while `r` and `h` should
+    be the scale and height (respectably) of the occluding bud.
+
+    :param tuple tip: the tip of the cone
+    :param tuple dir_vec: the direction vector of the cone
+    :param float r: a radius at h that describes the cone
+    :param float h: a height along the axis which along with `r` describes the cone
+    """
+    tx, ty, tz = tip
+
+    def in_cone(bud):
+        """Return whether the given bud totally fits in the cone."""
+        diff = (bud.norm_angle(bud.angle - tx), bud.height - ty, bud.radius - tz)
+        cone_dist = dot_product(diff, dir_vec)
+        if cone_dist < 0:
+            return False
+
+        radius = r * cone_dist / h
+
+        orth_dist = length(vect_diff(diff, vect_mul(dir_vec, cone_dist)))
+        return orth_dist < radius + bud.scale
+
+    return in_cone
 
 
 def linear_function(b1, b2):
