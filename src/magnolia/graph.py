@@ -86,6 +86,22 @@ def in_cone_checker(tip, dir_vec, r, h):
     return in_cone
 
 
+def middle_point(b1, b2):
+    """Find the approximate cutting point of the inner tangents of the provided buds."""
+    dir_vector = (b1.norm_angle(b2.angle - b1.angle), b2.height - b1.height, b2.radius - b1.radius)
+    line_len = length(dir_vector)
+
+    normed_dir = vect_mul(dir_vector, 1/line_len)
+
+    d1 = (b1.scale * line_len) / (b1.scale + b2.scale)
+
+    return (
+        b1.norm_angle(b1.angle + d1 * normed_dir[0]),
+        b1.height + d1 * normed_dir[1],
+        b1.radius + d1 * normed_dir[2],
+    )
+
+
 def linear_function(b1, b2):
     """Get a linear function that goes through the given buds.
 

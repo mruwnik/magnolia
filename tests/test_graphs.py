@@ -3,7 +3,7 @@ import pytest
 
 from magnolia.graph import (
     linear_function, perendicular_line, length, line_distance_check, dot_product, cross_product,
-    vect_diff, vect_mul, in_cone_checker
+    vect_diff, vect_mul, in_cone_checker, middle_point
 )
 from magnolia.meristem import Bud
 
@@ -133,6 +133,26 @@ def test_in_cone_checker_static_bud(tip, dir_vec, r, h):
     bud = make_bud(angle=math.pi/2, height=1, radius=3, scale=1)
     checker = in_cone_checker(tip, dir_vec, r, h)
     assert checker(bud) is True
+
+
+@pytest.mark.parametrize('b1, b2, point', (
+    # same size - the point should be half way between them
+    (make_bud(0, 0, 0), make_bud(2, 0, 0), (1, 0, 0)),
+    (make_bud(0, 0, 0), make_bud(-2, 0, 0), (-1, 0, 0)),
+    (make_bud(1, 2, 0), make_bud(2, 2, 0), (1.5, 2, 0)),
+    (make_bud(0, 10, 10), make_bud(0, 0, 0), (0, 5, 5)),
+    (make_bud(1, 1, 1), make_bud(0, 0, 0), (0.5, 0.5, 0.5)),
+
+    # different sizes
+    (make_bud(1, 0, 0, scale=1), make_bud(2, 0, 0, scale=2), (4/3., 0, 0)),
+    (make_bud(0, 0, 0, scale=1), make_bud(2, 0, 0, scale=2), (2/3., 0, 0)),
+    (make_bud(0, 0, 0, scale=1), make_bud(2, 0, 0, scale=9), (2/10., 0, 0)),
+    (make_bud(1, 1, 1, scale=9), make_bud(-1, -1, -1, scale=1), (-0.8, -0.8, -0.8)),
+))
+def test_middle_point(b1, b2, point):
+    """Check whether finding the approximate inner tangents crossing works."""
+    for i, j in zip(middle_point(b1, b2), point):
+        assert i == pytest.approx(j)
 
 
 Xs = [-361, -270, -180, -120, -90, -60, -15, 0, 15, 30, 45, 60, 90, 120, 180, 270, 360]
