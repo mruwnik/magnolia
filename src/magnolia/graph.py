@@ -6,7 +6,11 @@ from magnolia.meristem import Meristem
 def linear_function(b1, b2):
     """Get a linear function that goes through the given buds."""
     if not b1.angle2x(b2.angle - b1.angle):
-        return lambda bud: bud.height if bud.angle == b1.angle else 100 - bud.height
+        # Handle invalid height linear functions.
+        # As these functions are used to check if a bud is on a line, it suffices
+        # to return the height of the given bud when the angle is the same, and in
+        # other situations to return something that is totaly off
+        return lambda bud: bud.height if bud.angle == b1.angle else bud.height + 10000
     m = (b2.height - b1.height) / b1.angle2x(b2.angle - b1.angle)
     return lambda bud: m * bud.angle2x(bud.angle - b1.angle) + b1.height
 
@@ -28,6 +32,11 @@ def perendicular_line(b1, b2):
 
     m = (b2.height - b1.height) / b1.angle2x(b2.angle - b1.angle)
     x = b1.height - b2.height
+    # invalid linear function, as the perendicular line to these 2 buds would be
+    # parallel to the Y-axis
+    if not x:
+        x = m = 10.0 ** 8
+
     offset = b2.scale * 4 * x/abs(x)
     return lambda b: -1 / m * b.angle2x(b.angle - b1.angle) + b1.height - offset
 
@@ -44,7 +53,10 @@ def inner_tangents(b1, b2):
     yp = (b2.height * b1.scale + b1.height * b2.scale) / (b1.scale + b2.scale)
 
     worldxp, b, r = b1.angle2x(xp), b1.height, b1.scale
-    sqrd = math.sqrt(worldxp**2 + (yp - b)**2 - r**2)
+    try:
+        sqrd = math.sqrt(worldxp**2 + (yp - b)**2 - r**2)
+    except ValueError:
+        sqrd = 0
     absd = abs(worldxp**2 + (yp - b)**2)
     x1 = ((r**2) * worldxp + r * (yp - b) * sqrd) / (absd * b1.radius)
     x2 = ((r**2) * worldxp - r * (yp - b) * sqrd) / (absd * b1.radius)
@@ -53,10 +65,10 @@ def inner_tangents(b1, b2):
     y2 = ((r**2) * (yp - b) + r * worldxp * sqrd) / absd + b
 
     def left(b):
-        return ((yp - y1) * b.angle2x(b.angle - b1.angle - x1)) / b.angle2x(xp - x1) + y1
+        return ((yp - y1) * b.angle2x(b.angle - b1.angle - x1)) / b.angle2x(xp - x1 - 0.00001) + y1
 
     def right(b):
-        return ((yp - y2) * b.angle2x(b.angle - b1.angle - x2)) / b.angle2x(xp - x2) + y2
+        return ((yp - y2) * b.angle2x(b.angle - b1.angle - x2)) / b.angle2x(xp - x2 - 0.00001) + y2
 
     return left, right
 
