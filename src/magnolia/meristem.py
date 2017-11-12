@@ -96,7 +96,7 @@ class Bud(MeshDrawable):
     @property
     def html_colour(self):
         """Return the colour mapped to [0-255]"""
-        return [int(c * 255) for c in self._colour]
+        return [max(min(int(c * 255), 255), 0) for c in self._colour]
 
     @staticmethod
     def norm_angle(angle):

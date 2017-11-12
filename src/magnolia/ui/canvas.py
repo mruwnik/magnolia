@@ -9,7 +9,7 @@ from magnolia.ui.drawables import MultiDrawable, MeristemDisplay
 
 class OGLCanvas(MeristemDisplay, QOpenGLWidget):
     """A class to handle displaying OpenGL things on the screen."""
-    PERSPECTIVE = (60, 0.1, 120.0)
+    PERSPECTIVE = (60, 0.1, 1280.0)
     """The perspective matrix settings (angle, nearZ, farZ)"""
 
     def __init__(self, *args, **kwargs):

@@ -41,16 +41,21 @@ def length(vector):
     return math.sqrt(sum(i**2 for i in vector))
 
 
+def dir_vector(b1, b2):
+    """Return a direction vector for the provided buds."""
+    return (b1.norm_angle(b1.angle - b2.angle), b1.height - b2.height, b1.radius - b2.radius)
+
+
 def line_distance_check(b1, b2):
     """Return a function that calculates the distance from a line between the provided buds."""
     # the direction vector between the buds
-    dir_vector = (b1.norm_angle(b1.angle - b2.angle), b1.height - b2.height, b1.radius - b2.radius)
+    dir_vec = dir_vector(b1, b2)
 
     def checker(bud):
         # the diff between b1 and bud
         diff = (bud.norm_angle(bud.angle - b1.angle), bud.height - b1.height, bud.radius - b1.radius)
 
-        return length(cross_product(diff, dir_vector)) / length(dir_vector)
+        return length(cross_product(diff, dir_vec)) / length(dir_vec)
 
     return checker
 
@@ -88,10 +93,10 @@ def in_cone_checker(tip, dir_vec, r, h):
 
 def middle_point(b1, b2):
     """Find the approximate cutting point of the inner tangents of the provided buds."""
-    dir_vector = (b1.norm_angle(b2.angle - b1.angle), b2.height - b1.height, b2.radius - b1.radius)
-    line_len = length(dir_vector)
+    dir_vec = dir_vector(b1, b2)
+    line_len = length(dir_vec)
 
-    normed_dir = vect_mul(dir_vector, 1/line_len)
+    normed_dir = vect_mul(dir_vec, 1/line_len)
 
     d1 = (b1.scale * line_len) / (b1.scale + b2.scale)
 
@@ -104,15 +109,15 @@ def middle_point(b1, b2):
 
 def occlusion_cone(b1, b2):
     """Return a function that tests whether a given bud lies in the occlusion cone behind b2 from b1."""
-    dir_vector = (b1.norm_angle(b2.angle - b1.angle), b2.height - b1.height, b2.radius - b1.radius)
+    dir_vec = dir_vector(b1, b2)
     apex = middle_point(b1, b2)
 
     # because of the overwrapping of angles, there is a degenerative case when the cone lies on the angle axis
-    if dir_vector[1] == 0 and dir_vector[2] == 0:
+    if dir_vec[1] == 0 and dir_vec[2] == 0:
         h = length((b1.norm_angle(b2.angle - apex[0]), b2.height - apex[1], b2.radius - apex[2]))
     else:
         h = length(vect_diff((b2.angle, b2.height, b2.radius), apex))
-    return in_cone_checker(apex, dir_vector, b2.radius, h)
+    return in_cone_checker(apex, dir_vec, b2.radius, h)
 
 
 def linear_function(b1, b2):
@@ -131,30 +136,16 @@ def linear_function(b1, b2):
     return lambda bud: m * bud.angle2x(bud.angle - b1.angle) + b1.height
 
 
-def perendicular_line(b1, b2):
-    """Get a line function that is perendicular to the line between the 2 buds.
+def perendicular_plane_checker(b1, b2):
+    """Return a function that checks if a bud is behind the plane perendicular to b2."""
+    a, b, c = dir_vector(b1, b2)
 
-    The resulting function goes through b2' center + an offset that moves the line behind
-    b2 (away from b1).
+    def checker(bud):
+        """Return whether this bud is occluded by b2."""
+        pl = a * bud.norm_angle(bud.angle - b2.angle) + b * (bud.height - b2.height) + c * (bud.radius - b2.radius)
+        return pl >= 0
 
-    :param Bud b1: the first bud
-    :param Bud b2: the second bud
-    :rtype: function
-    :return: the line function
-    """
-    if b1.angle2x(b2.angle - b1.angle) == 0:
-        sign = (b1.height - b2.height)/abs(b1.height - b2.height)
-        return lambda bud: b2.height + sign * b2.scale/2
-
-    m = (b2.height - b1.height) / b1.angle2x(b2.angle - b1.angle)
-    x = b1.height - b2.height
-    # invalid linear function, as the perendicular line to these 2 buds would be
-    # parallel to the Y-axis
-    if not x:
-        x = m = 10.0 ** 8
-
-    offset = b2.scale * 4 * x/abs(x)
-    return lambda b: -1 / m * b.angle2x(b.angle - b1.angle) + b1.height - offset
+    return checker
 
 
 def get_reachable(selected, buds):  # noqa
@@ -174,17 +165,8 @@ def get_reachable(selected, buds):  # noqa
 
     # Check whether the 2 bud circles are intersecting
     if selected.distance(tested) <= selected.scale + tested.scale:
-        # the circles are intersecting, so get a line perendicular to the tested bud. Any buds
-        # behind the line are discarded. An offset it used to move the line a bit backwards, as
-        # otherwise the check is a bit too strict
-        left = perendicular_line(selected, tested)
-        for bud in buds[1:]:
-            if selected.height < tested.height:
-                if left(bud) < bud.height:
-                    continue
-            elif left(bud) >= bud.height:
-                continue
-            filtered.append(bud)
+        checker = perendicular_plane_checker(selected, tested)
+        filtered = list(filter(checker, buds[1:]))
     else:
         # discard all buds that are in the occlusion cone for the selected and tested buds
         checker = occlusion_cone(selected, tested)
@@ -213,8 +195,9 @@ class BudGraph(Meristem):
         # neighbours of each of its neighbours. This will fail if the new node is between
         # 2 other nodes. In that case both of them won't see each other, but will see the
         # new node, so everything should be ok
-        for neighbour in neighbours:
-            self.nodes[neighbour] = get_reachable(neighbour, self.closest(neighbour))
+# skip the check for now, as it's really slow
+#        for neighbour in neighbours:
+#            self.nodes[neighbour] = get_reachable(neighbour, self.closest(neighbour))
 
     def neighbours(self, bud):
         """Get a list of all buds that can be reached by the provided bud."""
