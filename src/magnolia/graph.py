@@ -3,13 +3,41 @@ import math
 from magnolia.meristem import Meristem
 
 
+def length(vector):
+    """Return the length of the provided vector."""
+    return math.sqrt(sum(i**2 for i in vector))
+
+
+def line_distance_check(b1, b2):
+    """Return a function that calculates the distance from a line between the provided buds."""
+    # the direction vector between the buds
+    a, b, c = b1.norm_angle(b1.angle - b2.angle), b1.height - b2.height, b1.radius - b2.radius
+
+    def checker(bud):
+        # the diff between b1 and bud
+        xd, yd, zd = bud.norm_angle(bud.angle - b1.angle), bud.height - b1.height, bud.radius - b1.radius
+
+        # the cross product of the diff x dir_vector
+        i = yd * c - zd * b
+        j = xd * c - zd * a
+        k = xd * b - yd * a
+
+        return length((i, j, k))/length((a, b, c))
+
+    return checker
+
+
 def linear_function(b1, b2):
-    """Get a linear function that goes through the given buds."""
+    """Get a linear function that goes through the given buds.
+
+    This only works correctly when both are the same distance from the stella (i.e. they
+    have the same radius).
+    """
     if not b1.angle2x(b2.angle - b1.angle):
         # Handle invalid height linear functions.
         # As these functions are used to check if a bud is on a line, it suffices
         # to return the height of the given bud when the angle is the same, and in
-        # other situations to return something that is totaly off
+        # other situations to return something that is totally off
         return lambda bud: bud.height if bud.angle == b1.angle else bud.height + 10000
     m = (b2.height - b1.height) / b1.angle2x(b2.angle - b1.angle)
     return lambda bud: m * bud.angle2x(bud.angle - b1.angle) + b1.height
@@ -65,10 +93,16 @@ def inner_tangents(b1, b2):
     y2 = ((r**2) * (yp - b) + r * worldxp * sqrd) / absd + b
 
     def left(b):
-        return ((yp - y1) * b.angle2x(b.angle - b1.angle - x1)) / b.angle2x(xp - x1 - 0.00001) + y1
+        xdiff = b.angle2x(xp - x1)
+        if xdiff == 0:
+            xdiff = 0.00001
+        return ((yp - y1) * b.angle2x(b.angle - b1.angle - x1)) / xdiff + y1
 
     def right(b):
-        return ((yp - y2) * b.angle2x(b.angle - b1.angle - x2)) / b.angle2x(xp - x2 - 0.00001) + y2
+        xdiff = b.angle2x(xp - x2)
+        if xdiff == 0:
+            xdiff = 0.00001
+        return ((yp - y2) * b.angle2x(b.angle - b1.angle - x2)) / xdiff + y2
 
     return left, right
 

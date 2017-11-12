@@ -1,12 +1,53 @@
 import math
 import pytest
 
-from magnolia.graph import linear_function, perendicular_line
+from magnolia.graph import linear_function, perendicular_line, length, line_distance_check
 from magnolia.meristem import Bud
 
 
-def make_bud(angle=0.123, height=1, radius=3):
-    return Bud(angle=angle, radius=radius, height=height)
+@pytest.mark.parametrize('vector, leng', (
+    ((1,), 1),
+    ((1, 1), math.sqrt(2)),
+    ((5, 3), math.sqrt(25 + 9)),
+    ((4, 3), 5),
+    ((1, 1, 1), 1.73205),
+    ((2, 1, 2), 3),
+    ((2, -14, 5), 15),
+))
+def test_length(vector, leng):
+    """Check whether calculating vector lengths works."""
+    assert length(vector) == pytest.approx(leng)
+
+
+def make_bud(angle=0.123, height=1, radius=3, scale=1):
+    return Bud(angle=angle, radius=radius, height=height, scale=scale)
+
+
+@pytest.mark.parametrize('b1, b2, b3, dist', (
+    # along the X axis
+    (make_bud(0, 0, 0), make_bud(0, 1, 0), make_bud(0, 2, 0), 0),
+    (make_bud(0, 0, 0), make_bud(0, 1, 0), make_bud(0, -12, 0), 0),
+    (make_bud(0, 0, 0), make_bud(0, 1, 0), make_bud(1, 0, 0), 1),
+    (make_bud(0, 0, 0), make_bud(0, 1, 0), make_bud(1, 2, 0), 1),
+
+    # along the Y axis
+    (make_bud(0, 0, 0), make_bud(1, 0, 0), make_bud(2, 0, 0), 0),
+    (make_bud(0, 0, 0), make_bud(1, 0, 0), make_bud(-12, 0, 0), 0),
+    (make_bud(0, 0, 0), make_bud(1, 0, 0), make_bud(0, 1, 0), 1),
+    (make_bud(0, 0, 0), make_bud(1, 0, 0), make_bud(2, 1, 0), 1),
+
+    # along the Z axis
+    (make_bud(0, 0, 0), make_bud(0, 0, 12), make_bud(0, 0, -312), 0),
+    (make_bud(0, 0, 0), make_bud(0, 0, 1), make_bud(0, 0, 0), 0),
+    (make_bud(0, 0, 0), make_bud(0, 0, 1), make_bud(0, -1, 0), 1),
+
+    # proper functions
+    (make_bud(1, 1, 1), make_bud(-1, -1, -1), make_bud(0, 1, 0), math.sqrt(2/3)),
+    (make_bud(3, 1, -1), make_bud(5, 2, 1), make_bud(0, 2, 3), 5),
+))
+def test_line_distance_check(b1, b2, b3, dist):
+    """Check whether calculating the distance from a point works."""
+    assert line_distance_check(b1, b2)(b3) == pytest.approx(dist)
 
 
 Xs = [-361, -270, -180, -120, -90, -60, -15, 0, 15, 30, 45, 60, 90, 120, 180, 270, 360]

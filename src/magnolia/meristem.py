@@ -95,6 +95,11 @@ class Bud(MeshDrawable):
         """Return the colour mapped to [0-255]"""
         return [int(c * 255) for c in self._colour]
 
+    @staticmethod
+    def norm_angle(angle):
+        """Normalize the given angle (wrapping around π)."""
+        return ((angle + math.pi) % (2 * math.pi) - math.pi)
+
     def angle2x(self, angle):
         """Return the given angle in pseudo 2D coordinates.
 
@@ -103,7 +108,7 @@ class Bud(MeshDrawable):
         have the same x value, regardless of their radius. This would mean that there would be no way
         to e.g. check which is wider.
         """
-        return ((angle + math.pi) % (2 * math.pi) - math.pi) * self.radius
+        return self.norm_angle(angle) * self.radius
 
     def distance(self, bud):
         """Calculate the distance between this bud and the provided one."""

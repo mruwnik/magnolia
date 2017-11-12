@@ -1,8 +1,9 @@
 import math
-from magnolia.meristem import Bud, Meristem
+from magnolia.meristem import Bud
+from magnolia.graph import BudGraph
 
 
-class Positioner(Meristem):
+class Positioner(BudGraph):
 
     BASE_RADIUS = 3.0
     colour = (0, 0, 0.7)
