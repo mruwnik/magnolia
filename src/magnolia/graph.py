@@ -116,8 +116,8 @@ def occlusion_cone(b1, b2):
     if dir_vec[1] == 0 and dir_vec[2] == 0:
         h = length((b1.norm_angle(b2.angle - apex[0]), b2.height - apex[1], b2.radius - apex[2]))
     else:
-        h = length(vect_diff((b2.angle, b2.height, b2.radius), apex))
-    return in_cone_checker(apex, dir_vec, b2.radius, h)
+        h = length((b1.norm_angle(b2.angle - apex[0]), b2.height - apex[1], b2.radius - apex[2]))
+    return in_cone_checker(apex, dir_vec, b2.scale, h)
 
 
 def on_helix_checker(b1, b2):
