@@ -4,7 +4,7 @@ from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from magnolia.ui import Ui_MainWindow, signaler
-from magnolia.positioners import AnglePositioner
+from magnolia.positioners import RingPositioner
 
 
 class Prog(QMainWindow):
@@ -18,7 +18,7 @@ class Prog(QMainWindow):
         self.ui.pushButton_2.pressed.connect(self.add_ring)
 
         # Make a dummy meristem with random buds in different colours
-        self.meristem = AnglePositioner(math.radians(20), 16)
+        self.meristem = RingPositioner(math.radians(60), 3)
         buds = [self.meristem.new() for _ in range(240)]
         self.meristem.add(*buds)
 
@@ -54,9 +54,9 @@ class Prog(QMainWindow):
             d = bud.distance(b)
             b.colours = (d/bud.radius, 1, 1 - d/bud.radius)
 
-        for line in self.meristem.axes(bud):
-            for b in self.meristem.on_line(line):
-                b.colours = (1, 1, 0.5)
+            for line in self.meristem.axes(bud):
+                for b in self.meristem.on_line(line):
+                    b.colours = (1, 1, 0.5)
 
         bud.colours = bud.GREEN
         self.meristem.refresh_field('colours')

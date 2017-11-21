@@ -156,7 +156,7 @@ class RingPositioner(Positioner):
         if not height:
             lat = abs(angle % self.angle_step)
             if lat > self.angle_step / 2:
-                lat -= self.angle_step / 2
+                lat = self.angle_step - lat
             lat *= self.BASE_RADIUS
             self.ring_height = math.sqrt(4*self.bud_radius**2 - lat**2)
 
