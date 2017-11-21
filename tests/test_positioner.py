@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from magnolia.positioners import Positioner, AnglePositioner
+from magnolia.positioners import Positioner, AnglePositioner, RingPositioner
 
 
 def test_new():
@@ -136,3 +136,25 @@ def test_angle_next_pos(angle, per_row, result_angles):
     """Check whether correct angles are returned."""
     poser = AnglePositioner(math.radians(angle), per_row)
     assert [poser._next_pos()[0] for _ in range(10)] == result_angles
+
+
+@pytest.mark.parametrize('angle, per_row, height, expected_angles', (
+    (0, 3, 2*math.pi, (-120, -240, -360, 0, -120, -240, 0, -120, -240, 0, -120, -240)),
+    (20, 3, 6.195304, (-120, -240, -360, 20, -100, -220, 40, -80, -200, 60, -60, -180)),
+    (0, 6, math.pi, (
+        -60, -120, -180, -240, -300, -360, 0, -60, -120, -180, -240, -300, 0, -60,
+        -120, -180, -240, -300, 0, -60, -120, -180, -240, -300
+    )),
+    (20, 4, 4.59456, (
+        -90, -180, -270, -360, 20, -70, -160, -250, 40, -50, -140, -230, 60, -30, -120, -210
+    )),
+))
+def test_ring_angles(angle, per_row, height, expected_angles):
+    """Check whether ring positioners return correct positions."""
+    poser = RingPositioner(math.radians(angle), per_row)
+
+    heights = [height * i for i in range(4) for row in range(per_row)]
+    for angle, height in zip(expected_angles, heights):
+        a, h, r, s = poser._next_pos()
+        assert math.radians(angle) == pytest.approx(a)
+        assert height == pytest.approx(h)
