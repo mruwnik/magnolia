@@ -120,6 +120,41 @@ def occlusion_cone(b1, b2):
     return in_cone_checker(apex, dir_vec, b2.radius, h)
 
 
+def on_helix_checker(b1, b2):
+    """Return a function that checks if a bud lies on the helix going through the provided buds."""
+    hdiff = b2.height - b1.height
+    adiff = b2.angle - b1.angle
+
+    if b2.height < b1.height:
+        hdiff = -hdiff
+        adiff = -adiff
+
+    # the buds are on the same height - a circle, not a helix
+    if abs(hdiff) < 0.001:
+        return lambda b: abs(b.height - b1.height) < 0.001
+
+    # the buds have the same angle - a vertical line, not a helix
+    if abs(adiff) < 0.001:
+        return lambda b: abs(b.norm_angle(b.angle - b1.angle)) < 0.001
+
+    slope = math.atan(adiff/hdiff)
+
+    def on_helix(b):
+        """Check if the provided bud is on the given helix.
+
+        The helix is created as (bud.radius, t - bud.angle, slope*t - bud.height). This
+        make things easier, as it's really just the unit helix moved up by the selected
+        buds height, moved sideways by the selected buds angle and then streched so that
+        it goes through the second bud. The slope is calculated from the tangent of how
+        much the helix was moved laterly and vertically.
+        """
+        angle_diff = b.norm_angle(b.angle - b1.angle)
+        height_diff = b.norm_angle(slope * (b.height - b1.height))
+        return abs(angle_diff - height_diff) < min(1, abs(slope)) * b.scale
+
+    return on_helix
+
+
 def linear_function(b1, b2):
     """Get a linear function that goes through the given buds.
 
@@ -216,8 +251,8 @@ class BudGraph(Meristem):
             for checked in neighbours[i + 1:]:
                 if bud.opposite(neighbour, checked):
                     paired += [neighbour, checked]
-                    yield linear_function(neighbour, checked)
+                    yield on_helix_checker(neighbour, checked)
 
-    def on_line(self, line):
+    def on_line(self, line_checker):
         """Get all buds that are on the given line."""
-        return [b for b in self.objects if round(line(b) - b.height, 5) == 0]
+        return filter(line_checker, self.displayables)
