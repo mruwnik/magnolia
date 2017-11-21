@@ -93,7 +93,7 @@ def in_cone_checker(tip, dir_vec, r, h):
 
 def middle_point(b1, b2):
     """Find the approximate cutting point of the inner tangents of the provided buds."""
-    dir_vec = dir_vector(b1, b2)
+    dir_vec = dir_vector(b2, b1)
     line_len = length(dir_vec)
 
     normed_dir = vect_mul(dir_vec, 1/line_len)
@@ -109,7 +109,7 @@ def middle_point(b1, b2):
 
 def occlusion_cone(b1, b2):
     """Return a function that tests whether a given bud lies in the occlusion cone behind b2 from b1."""
-    dir_vec = dir_vector(b1, b2)
+    dir_vec = dir_vector(b2, b1)
     apex = middle_point(b1, b2)
 
     # because of the overwrapping of angles, there is a degenerative case when the cone lies on the angle axis
@@ -199,13 +199,14 @@ def get_reachable(selected, buds):  # noqa
         return buds
 
     # Check whether the 2 bud circles are intersecting
-    if selected.distance(tested) <= selected.scale + tested.scale:
+    if selected.distance(tested) <= selected.scale + tested.scale + 0.0001:
         checker = perendicular_plane_checker(selected, tested)
         filtered = list(filter(checker, buds[1:]))
     else:
         # discard all buds that are in the occlusion cone for the selected and tested buds
         checker = occlusion_cone(selected, tested)
         filtered = [bud for bud in buds[1:] if not checker(bud)]
+
     return [tested] + get_reachable(selected, filtered)
 
 

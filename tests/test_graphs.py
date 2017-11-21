@@ -2,7 +2,7 @@ import math
 import pytest
 
 from magnolia.graph import (
-    linear_function, perendicular_line, length, line_distance_check, dot_product, cross_product,
+    linear_function, perendicular_plane_checker, length, line_distance_check, dot_product, cross_product,
     vect_diff, vect_mul, in_cone_checker, middle_point
 )
 from magnolia.meristem import Bud
@@ -190,29 +190,37 @@ def test_linear_function(b1, b2, ys):
         assert func(test_bud) == pytest.approx(y)
 
 
-@pytest.mark.parametrize('b1, b2, ys', (
+@pytest.mark.parametrize('b1, b2, on_plane', (
     # invalid functions (parallel to the Y-axis)
-    (make_bud(0, 0), make_bud(math.pi, 0), [-4] * 18),
-    (make_bud(0, 12), make_bud(math.pi, 12), [12 - 4] * 18),
+    (
+        make_bud(0, 0), make_bud(math.pi, 0),
+        [False, True, True, False, False, False, False, True, True, True, True, True, True, True, True, False, True]
+    ),
+    (
+        make_bud(0, 12), make_bud(math.pi, 12),
+        [False, True, True, False, False, False, False, True, True, True, True, True, True, True, True, False, True]
+    ),
 
     # along the X axis
-    (make_bud(0, 0), make_bud(0, 1), [0.5] * 18),
-    (make_bud(math.pi/2, 3), make_bud(math.pi/2, 4), [4 - 0.5] * 18),
-    (make_bud(math.pi/2, 4), make_bud(math.pi/2, 3), [3 + 0.5] * 18),
-    (make_bud(-math.pi/2, 3), make_bud(-math.pi/2, 4), [4 - 0.5] * 18),
+    (make_bud(0, 0), make_bud(0, 1), [True] * 18),
+    (make_bud(math.pi/2, 3), make_bud(math.pi/2, 4), [True] * 18),
+    (make_bud(math.pi/2, 4), make_bud(math.pi/2, 3), [False] * 18),
+    (make_bud(-math.pi/2, 3), make_bud(-math.pi/2, 4), [True] * 18),
 
     # actual functions
     (
         make_bud(0, 0), make_bud(math.radians(90), 1),
-        [4.246740, -18.20660, 48.413219, 33.60881, 26.20660, 18.804406, 7.701101, 4.0, 0.29889834,
-         -3.4022033, -7.103304, -10.80440, -18.20660, -25.60881, 48.413219, 26.20660, 4.0]
+        # actual values:
+        # [4.246740, -18.20660, 48.413219, 33.60881, 26.20660, 18.804406, 7.701101, 4.0, 0.29889834,
+        # -3.4022033, -7.103304, -10.80440, -18.20660, -25.60881, 48.413219, 26.20660, 4.0]
+        [True, True, False, False, True, True, True, True, True, True, True, True, True, False, False, True, True]
     ),
 ))
-def test_perendicular_line(b1, b2, ys):
-    """Check whether perendicular lines get correctly created."""
-    func = perendicular_line(b1, b2)
+def test_perendicular_plane_checker(b1, b2, on_plane):
+    """Check whether perendicular planes are correctly checked."""
+    func = perendicular_plane_checker(b1, b2)
     test_bud = make_bud()
 
-    for x, y in zip(Xs, ys):
+    for x, is_on in zip(Xs, on_plane):
         test_bud.angle = math.radians(x)
-        assert func(test_bud) == pytest.approx(y)
+        assert func(test_bud) == is_on
