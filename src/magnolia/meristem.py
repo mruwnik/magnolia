@@ -65,6 +65,13 @@ class Bud(MeshDrawable):
     def __repr__(self):
         return '<Bud (angle=%s, height=%s, radius=%s, scale=%s)' % (self.angle, self.height, self.radius, self.scale)
 
+    @staticmethod
+    def cyl_to_cart(angle, height, radius):
+        """Convert the given cylinderic point to a cartesian one."""
+        x = math.sin(angle) * radius
+        z = math.cos(angle) * radius
+        return (x, height, z)
+
     @property
     def offset(self):
         """Calculate the buds offset from the meristems origin.
@@ -72,9 +79,7 @@ class Bud(MeshDrawable):
         The bud is positioned on a simple circle on the XZ axis, so
         simple trigonometry does the trick.
         """
-        x = math.sin(self.angle) * self.radius
-        z = math.cos(self.angle) * self.radius
-        return (x, self.height, z)
+        return self.cyl_to_cart(self.angle, self.height, self.radius)
 
     @property
     def normals(self):

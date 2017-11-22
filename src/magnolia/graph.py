@@ -123,7 +123,7 @@ def occlusion_cone(b1, b2):
 def on_helix_checker(b1, b2):
     """Return a function that checks if a bud lies on the helix going through the provided buds."""
     hdiff = b2.height - b1.height
-    adiff = b2.angle - b1.angle
+    adiff = b1.norm_angle(b2.angle - b1.angle)
 
     if b2.height < b1.height:
         hdiff = -hdiff
@@ -153,6 +153,64 @@ def on_helix_checker(b1, b2):
         return abs(angle_diff - height_diff) < min(1, abs(slope)) * b.scale
 
     return on_helix
+
+
+def helix(b1, b2):
+    """Return a generator that returns (cartesian) points on a helix going through the provided buds.
+
+    Each point is b1.scale away from the next one.
+    """
+    hdiff = b2.height - b1.height
+    adiff = b1.norm_angle(b2.angle - b1.angle)
+
+    # the buds are on the same height - a circle, not a helix
+    if abs(hdiff) < 0.001:
+        def circle(height):
+            return (
+                b1.cyl_to_cart(math.radians(a), b1.height, b1.radius + b1.scale)
+                for a in range(0, 360, 5)
+            )
+
+        return circle
+
+    # the buds have the same angle - a vertical line, not a helix
+    if abs(adiff) < 0.001:
+        def line(height):
+            return (
+                b1.cyl_to_cart(b1.angle, h, b1.radius + b1.scale)
+                for h in range(int(round(height)))
+            )
+
+        return line
+
+    slope = hdiff/adiff
+
+    def helix_pos(height):
+        """Check if the provided bud is on the given helix.
+
+        The helix is created as (bud.radius, t - bud.angle, slope*t - bud.height). This
+        make things easier, as it's really just the unit helix moved up by the selected
+        buds height, moved sideways by the selected buds angle and then streched so that
+        it goes through the second bud. The slope is calculated from the tangent of how
+        much the helix was moved laterly and vertically.
+        """
+        # calculate the i which is closest to the origin. This is derived from
+        #
+        #   h(t) = slope * t + b1.height
+        #   t(i) = sign *  i * math.radians(5)
+        #   h(i) = slope * (sign *  i * math.radians(5)) + b1.height
+        #   h(i) = 0
+        i0 = int(round(-b1.height/(slope * math.radians(5))))
+
+        # next calculate the i which is closest to the height (h(i) == height)
+        iend = int(round((height - b1.height)/(slope * math.radians(5))))
+
+        for i in range(min(i0, iend), max(i0, iend)):
+            t = i * math.radians(5)
+            angle, height, radius = b1.norm_angle(t + b1.angle), slope * t + b1.height, b1.radius + b1.scale
+            yield b1.cyl_to_cart(angle, height, radius)
+
+    return helix_pos
 
 
 def linear_function(b1, b2):
@@ -244,6 +302,14 @@ class BudGraph(Meristem):
 
         A axis is defined as any line that goes through a bud and at least 2 of its neighbours.
         """
+        for neighbour, checked in self._paired(bud):
+            yield on_helix_checker(neighbour, checked)
+
+    def _paired(self, bud):
+        """Yield all possible axis pairs through the given bud.
+
+        A axis is defined as any line that goes through a bud and at least 2 (the pair) of its neighbours.
+        """
         paired = []
         neighbours = self.neighbours(bud)
         for i, neighbour in enumerate(neighbours):
@@ -252,7 +318,7 @@ class BudGraph(Meristem):
             for checked in neighbours[i + 1:]:
                 if bud.opposite(neighbour, checked):
                     paired += [neighbour, checked]
-                    yield on_helix_checker(neighbour, checked)
+                    yield neighbour, checked
 
     def on_line(self, line_checker):
         """Get all buds that are on the given line."""

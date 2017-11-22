@@ -4,7 +4,7 @@ from path import Path
 from qtpy.QtWidgets import QOpenGLWidget
 from qtpy.QtGui import QOpenGLShader, QOpenGLShaderProgram, QMatrix4x4, QOpenGLVersionProfile, QVector3D
 
-from magnolia.ui.drawables import MultiDrawable, MeristemDisplay
+from magnolia.ui.drawables import MeristemDisplay
 
 
 class OGLCanvas(MeristemDisplay, QOpenGLWidget):
@@ -15,7 +15,7 @@ class OGLCanvas(MeristemDisplay, QOpenGLWidget):
     def __init__(self, *args, **kwargs):
         """Initialise a new object."""
         super(OGLCanvas, self).__init__(*args, **kwargs)
-        self.lines = MultiDrawable([])
+        self.lines = []
 
     def _load_program(self, vertex_shader, fragment_shader):
         """Load the given shader programs."""
@@ -118,11 +118,13 @@ class OGLCanvas(MeristemDisplay, QOpenGLWidget):
 
             self.gl.glDrawArrays(self.gl.GL_TRIANGLES, 0, self.objects.points_count)
 
-        if self.lines.objects:
-            self.loadAttrArray(self.m_posAttr, self.lines.vertices)
-            self.loadAttrArray(self.m_colAttr, self.lines.colours)
+        if self.lines:
+            self.gl.glLineWidth(3)
+            for line in self.lines:
+                self.loadAttrArray(self.m_posAttr, line.vertices)
+                self.loadAttrArray(self.m_colAttr, line.colours)
 
-            self.gl.glDrawArrays(self.gl.GL_LINES, 0, self.lines.points_count)
+                self.gl.glDrawArrays(self.gl.GL_LINE_STRIP, 0, line.points_count)
 
         self.program.release()
 

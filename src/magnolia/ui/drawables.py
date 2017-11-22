@@ -64,17 +64,30 @@ class Drawable(QObject):
         return self
 
 
+class PointDrawable(Drawable):
+    """A single point."""
+
+    def __init__(self, x, y, z, colour):
+        """Setup the point.
+
+        :param tuple p: the point
+        :param tuple colour: the colour of the point
+        """
+        super().__init__(points=[(x, y, z)], colours=array.array('f', colour * 2))
+
+
 class LineDrawable(Drawable):
     """A single straight line."""
 
-    def __init__(self, p1, p2, colour):
+    def __init__(self, points, colour):
         """Setup the line.
 
-        :param tuple p1: the start point of the line
-        :param tuple p2: the end point of the line
+        :param tuple points: points through which the line will go
         :param tuple colour: the colour of the line
         """
-        super(LineDrawable, self).__init__(points=[p1, p2], colours=array.array('f', colour * 2))
+        points = list(points)
+        self.points_count = len(points)
+        super(LineDrawable, self).__init__(points=points, colours=array.array('f', colour * self.points_count))
 
 
 class MeshDrawable(Drawable):
@@ -127,15 +140,18 @@ class MultiDrawable(Drawable):
         """Initialise the collection with a list of objects."""
         objects = kwargs.pop('objects', [])
         super(MultiDrawable, self).__init__(*args, **kwargs)
+        self.clear()
 
-        self.selected = []
-        self.objects = []
-        self.calculate_lists()
         self.add(*objects)
 
     @property
     def displayables(self):
         return self.objects
+
+    def clear(self):
+        self.selected = []
+        self.objects = []
+        self.calculate_lists()
 
     def register_refresh(self, items):
         """Make sure this collection gets a refresh signal whenever one of the items changes."""
