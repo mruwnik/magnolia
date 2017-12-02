@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'ui/mainwindow.ui'
 #
-# Created by: PyQt5 UI code generator 5.8.2
+# Created by: PyQt5 UI code generator 5.9
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(723, 466)
+        MainWindow.resize(1304, 671)
         self.mainWidget = QtWidgets.QWidget(MainWindow)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -41,7 +41,7 @@ class Ui_MainWindow(object):
         self.mainCanvas.setObjectName("mainCanvas")
         self.horizontalLayout.addWidget(self.mainCanvas)
         self.flatStem = FlatStem(self.mainWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.flatStem.sizePolicy().hasHeightForWidth())
@@ -79,6 +79,14 @@ class Ui_MainWindow(object):
         self.pushButton_2 = QtWidgets.QPushButton(self.mainWidget)
         self.pushButton_2.setObjectName("pushButton_2")
         self.optionsContainer.addWidget(self.pushButton_2)
+        self.widget = Segment(self.mainWidget)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setHeightForWidth(self.widget.sizePolicy().hasHeightForWidth())
+        self.widget.setSizePolicy(sizePolicy)
+        self.widget.setObjectName("widget")
+        self.optionsContainer.addWidget(self.widget)
         self.redrawButton = QtWidgets.QPushButton(self.mainWidget)
         self.redrawButton.setObjectName("redrawButton")
         self.optionsContainer.addWidget(self.redrawButton)
@@ -88,7 +96,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addLayout(self.horizontalLayout)
         MainWindow.setCentralWidget(self.mainWidget)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 723, 22))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1304, 19))
         self.menuBar.setObjectName("menuBar")
         MainWindow.setMenuBar(self.menuBar)
         self.mainToolBar = QtWidgets.QToolBar(MainWindow)
@@ -118,3 +126,4 @@ class Ui_MainWindow(object):
 
 from magnolia.ui.canvas import OGLCanvas
 from magnolia.ui.flat import FlatStem
+from magnolia.ui.widgets import Segment
