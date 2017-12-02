@@ -1,15 +1,27 @@
+import math
+
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel, QSizePolicy, QSpacerItem,
-    QPushButton,
+    QPushButton, QLineEdit,
 )
 
 
 class Segment(QWidget):
     """A widget to handle meristem settings."""
 
-    def __init__(self, *args, **kwargs):
+    name = 'base_segment'
+
+    def __init__(self, positioner_class, *args, **kwargs):
         """Initialise this segment."""
         super().__init__(*args, **kwargs)
+
+        self.positioner_class = positioner_class
+
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
+        self.setSizePolicy(sizePolicy)
 
         self.init_container()
         self.init_controls()
@@ -19,13 +31,7 @@ class Segment(QWidget):
         self.main_box = QVBoxLayout(self)
         self.main_box.setObjectName('main_box')
 
-        self.label = QLabel(self)
-        sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
-        sizePolicy.setHorizontalStretch(1)
-        sizePolicy.setVerticalStretch(0)
-        self.label.setSizePolicy(sizePolicy)
-        self.label.setObjectName("label")
-        self.label.setText("Segment")
+        self.label = self.make_label('label', self.name)
         self.main_box.addWidget(self.label)
 
     def init_controls(self):
@@ -56,4 +62,61 @@ class Segment(QWidget):
 
     def make_controls(self):
         """Add all controls needed for a given meristem to be set up."""
-        pass
+        self.to_add_input = None
+
+    @property
+    def to_add(self):
+        return int(self.to_add_input.text() or 0)
+
+    def text_line(self, name, default=None):
+        """Make a text input with the given name and default value."""
+        text_line = QLineEdit(self)
+        text_line.setObjectName(name)
+        if default:
+            text_line.setText(str(default))
+
+        text_line.setFixedWidth(30)
+        sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(1)
+        sizePolicy.setHeightForWidth(text_line.sizePolicy().hasHeightForWidth())
+        text_line.setSizePolicy(sizePolicy)
+        return text_line
+
+    def make_label(self, name, text):
+        """Make a label with the given name and text."""
+        label = QLabel(self)
+        sizePolicy = QSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(0)
+        label.setSizePolicy(sizePolicy)
+        label.setObjectName(name)
+        label.setText(text)
+        return label
+
+
+class RingSegment(Segment):
+
+    name = 'Ring positioner'
+
+    def make_controls(self):
+        """Add all controls needed for a given meristem to be set up."""
+        self.controls.addWidget(self.make_label('angle_label', 'angle:'))
+        self.angle = self.text_line('set_angle', 60)
+        self.controls.addWidget(self.angle)
+
+        self.controls.addWidget(self.make_label('per_ring_label', 'per ring:'))
+        self.per_ring = self.text_line('per_ring', 12)
+        self.controls.addWidget(self.per_ring)
+
+        self.controls.addWidget(self.make_label('rings_label', 'rings:'))
+        self.to_add_input = self.text_line('set_rings', 5)
+        self.controls.addWidget(self.to_add_input)
+
+    def positioner(self, start_angle, start_height):
+        return self.positioner_class(
+            math.radians(float(self.angle.text() or 0)),
+            int(self.per_ring.text() or 0),
+            start_angle=start_angle,
+            start_height=start_height,
+        )

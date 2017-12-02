@@ -169,6 +169,12 @@ class MultiDrawable(Drawable):
         self.colours = self.colours + self.concat('colours', items)
         self.points_count = len(self.vertices) / 3
 
+    def truncate(self, n):
+        """Truncate the objects to at most n of them."""
+        if n < len(self.objects):
+            self.objects = self.objects[:n]
+        self.calculate_lists()
+
     def concat(self, field, objects):
         """Return a float array containing all the values found in the given field.
 

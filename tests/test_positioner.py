@@ -157,4 +157,4 @@ def test_ring_angles(angle, per_row, height, expected_angles):
     for angle, height in zip(expected_angles, heights):
         a, h, r, s = poser._next_pos()
         assert math.radians(angle) == pytest.approx(a)
-        assert height == pytest.approx(h)
+        assert height == pytest.approx(h - s)

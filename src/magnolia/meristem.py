@@ -65,6 +65,10 @@ class Bud(MeshDrawable):
     def __repr__(self):
         return '<Bud (angle=%s, height=%s, radius=%s, scale=%s)' % (self.angle, self.height, self.radius, self.scale)
 
+    def update_pos(self, angle, height, radius, scale):
+        """Overwrite the current position with the provided values."""
+        self.angle, self.height, self.radius, self.scale = angle, height, radius, scale
+
     @staticmethod
     def cyl_to_cart(angle, height, radius):
         """Convert the given cylinderic point to a cartesian one."""
@@ -176,6 +180,21 @@ class Meristem(MultiDrawable):
         """
         buds = sorted(self.objects, key=lambda b: bud.distance(b))
         return buds[1:]
+
+    def next_or_new(self):
+        """
+        Iterate through all the objects of this collection, and when they are exhausted, yield new buds.
+
+        Existing buds aren't modified in any way, new ones only get registered - no vertice calculations
+        or any such things are done.
+        """
+        for bud in self.displayables:
+            yield bud
+
+        while True:
+            bud = Bud()
+            yield bud
+            self.add(bud)
 
     @property
     def radius(self):

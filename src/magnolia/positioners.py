@@ -11,9 +11,9 @@ class Positioner(BudGraph):
         """Initialise the positioner."""
         super().__init__()
         self.colour = colour
-        self.start_height = self.current_height = start_height
-        self.start_angle = self.current_angle = start_angle
         self.bud_radius = size if size else self.BASE_RADIUS
+        self.start_height = self.current_height = start_height + self.bud_radius
+        self.start_angle = self.current_angle = start_angle
 
     def new(self):
         """Create a new item."""
@@ -37,6 +37,11 @@ class Positioner(BudGraph):
         :returns: a tuple with the (angle, height, radius, scale) of the next bud
         """
         return 0, 1, self.bud_radius, 1
+
+    def n_positions(self, n):
+        """Yield the positions of the next n buds."""
+        for i in range(n):
+            yield self._next_pos()
 
     def remove(self, item):
         """Remove the given item."""
@@ -143,14 +148,16 @@ class RingPositioner(Positioner):
         :param int per_ring: how many buds per ring
         :param double height: the height between each ring. If not provided, the rings will touch each other
         """
+        bud_radius = kwargs.pop('size', 0)
+        if not bud_radius:
+            bud_radius = (math.pi * self.BASE_RADIUS) / per_ring
+        kwargs['size'] = bud_radius
+
         super().__init__(**kwargs)
         self.buds_per_ring = per_ring
         self.angle = angle
         self.angle_step = 2 * math.pi / per_ring
         self.current_ring_place = self.current_ring = 0
-
-        if not kwargs.get('bud_radius'):
-            self.bud_radius = (math.pi * self.BASE_RADIUS) / per_ring
 
         self.ring_height = height
         if not height:
@@ -177,3 +184,8 @@ class RingPositioner(Positioner):
             self.current_height = self.ring_height * self.current_ring + self.start_height
 
         return self.current_angle, self.current_height, self.BASE_RADIUS, self.bud_radius
+
+    def n_positions(self, n):
+        """Yield the positions of the next n rings."""
+        for i in range(n * self.buds_per_ring):
+            yield self._next_pos()

@@ -56,7 +56,7 @@
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
           <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
+          <verstretch>1</verstretch>
          </sizepolicy>
         </property>
         <property name="autoFillBackground">
@@ -105,10 +105,7 @@
        </widget>
       </item>
       <item>
-       <layout class="QVBoxLayout" name="optionsContainer" stretch="0,0,0,0,0">
-        <property name="sizeConstraint">
-         <enum>QLayout::SetMinimumSize</enum>
-        </property>
+       <layout class="QVBoxLayout" name="optionsContainer">
         <item>
          <widget class="QRadioButton" name="mode_movement">
           <property name="text">
@@ -127,19 +124,31 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="pushButton_2">
-          <property name="text">
-           <string>PushButton</string>
+         <layout class="QVBoxLayout" name="positioner_settings_container"/>
+        </item>
+        <item>
+         <widget class="QComboBox" name="positioners">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="editable">
+           <bool>false</bool>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="Segment" name="widget" native="true">
+         <widget class="QPushButton" name="add_segment">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-            <horstretch>1</horstretch>
-            <verstretch>1</verstretch>
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Add segment</string>
           </property>
          </widget>
         </item>
@@ -200,12 +209,6 @@
     <slot>allowMovement()</slot>
     <slot>redraw()</slot>
    </slots>
-  </customwidget>
-  <customwidget>
-   <class>Segment</class>
-   <extends>QWidget</extends>
-   <header>magnolia/ui/widgets.h</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
@@ -299,22 +302,6 @@
     <hint type="sourcelabel">
      <x>660</x>
      <y>114</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>440</x>
-     <y>241</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>redrawButton</sender>
-   <signal>pressed()</signal>
-   <receiver>flatStem</receiver>
-   <slot>redraw()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>660</x>
-     <y>363</y>
     </hint>
     <hint type="destinationlabel">
      <x>440</x>

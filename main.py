@@ -1,10 +1,9 @@
-import math
-
 from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
-from magnolia.ui import Ui_MainWindow, signaler
+from magnolia.ui import Ui_MainWindow, signaler, positioners
 from magnolia.positioners import RingPositioner
+from magnolia.graph import BudGraph
 
 
 class Prog(QMainWindow):
@@ -13,14 +12,13 @@ class Prog(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.ui.positioners.addItems(positioners.keys())
+        self.used_positioners = []
+
         self.connect_views()
-
-        self.ui.pushButton_2.pressed.connect(self.add_ring)
-
         # Make a dummy meristem with random buds in different colours
-        self.meristem = RingPositioner(math.radians(60), 3)
-        buds = [self.meristem.new() for _ in range(240)]
-        self.meristem.add(*buds)
+        self.meristem = BudGraph()
 
         # set the OpenGL canvas up with the meristem
         self.ui.mainCanvas.objects = self.meristem
@@ -32,13 +30,44 @@ class Prog(QMainWindow):
         timer.timeout.connect(self.ui.mainCanvas.update)
         timer.start(20)
 
-    def add_ring(self):
-        buds = self.ringer.make_ring(colour=(0.7, 0, 0.1))
-        self.meristem.add(*buds)
+    def add_positioner(self):
+        pos_name = self.ui.positioners.currentText()
+        positioner_classes = {
+            'Ring positioner': RingPositioner
+        }
+        segment = positioners[pos_name](
+            positioner_classes[pos_name],
+            self.ui.mainWidget
+        )
+        self.used_positioners.append(segment)
+
+        segment.setObjectName(pos_name)
+        self.ui.positioner_settings_container.addWidget(segment)
+
+        def remove_segment(*args):
+            self.ui.positioner_settings_container.removeWidget(segment)
+            self.used_positioners.remove(segment)
+            segment.setParent(None)
+
+        segment.delete_button.pressed.connect(remove_segment)
+
+    def redraw(self):
+        buds = self.meristem.next_or_new()
+        i, angle, height, radius, scale = 0, 0, 0, 0, 0
+
+        for pos_setter in self.used_positioners:
+            positioner = pos_setter.positioner(angle, height + scale)
+            for angle, height, radius, scale in positioner.n_positions(pos_setter.to_add):
+                next(buds).update_pos(angle, height, radius, scale)
+                i += 1
+
+        self.meristem.truncate(i)
         signaler.refresh_needed.emit()
 
     def connect_views(self):
         signaler.drawable_selected.connect(self.bud_selected)
+        self.ui.add_segment.pressed.connect(self.add_positioner)
+        self.ui.redrawButton.pressed.connect(self.redraw)
 
     def bud_selected(self, bud):
         """Handle a bud being selected. It displays the selected bud's neighbours."""
