@@ -107,31 +107,28 @@
       <item>
        <layout class="QVBoxLayout" name="optionsContainer">
         <item>
-         <widget class="QRadioButton" name="mode_movement">
-          <property name="text">
-           <string>Ruch</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="mode_selection">
-          <property name="text">
-           <string>Wybieranie</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <layout class="QVBoxLayout" name="positioner_settings_container"/>
+         <layout class="QVBoxLayout" name="positioner_settings_container" stretch="0">
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </item>
         <item>
          <widget class="QComboBox" name="positioners">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
             <horstretch>0</horstretch>
-            <verstretch>1</verstretch>
+            <verstretch>0</verstretch>
            </sizepolicy>
           </property>
           <property name="editable">
@@ -154,6 +151,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="redrawButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>redraw</string>
           </property>
@@ -214,38 +217,6 @@
  <resources/>
  <connections>
   <connection>
-   <sender>mode_movement</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>mainCanvas</receiver>
-   <slot>allowMovement()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>660</x>
-     <y>114</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>306</x>
-     <y>241</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>mode_selection</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>mainCanvas</receiver>
-   <slot>allowSelection()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>660</x>
-     <y>196</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>306</x>
-     <y>241</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>zoom</sender>
    <signal>valueChanged(int)</signal>
    <receiver>mainCanvas</receiver>
@@ -270,38 +241,6 @@
     <hint type="sourcelabel">
      <x>595</x>
      <y>241</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>440</x>
-     <y>241</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>mode_selection</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>flatStem</receiver>
-   <slot>allowSelection()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>660</x>
-     <y>196</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>440</x>
-     <y>241</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>mode_movement</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>flatStem</receiver>
-   <slot>allowMovement()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>660</x>
-     <y>114</y>
     </hint>
     <hint type="destinationlabel">
      <x>440</x>

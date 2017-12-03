@@ -42,7 +42,7 @@ class Prog(QMainWindow):
         self.used_positioners.append(segment)
 
         segment.setObjectName(pos_name)
-        self.ui.positioner_settings_container.addWidget(segment)
+        self.ui.positioner_settings_container.insertWidget(0, segment)
 
         def remove_segment(*args):
             self.ui.positioner_settings_container.removeWidget(segment)
