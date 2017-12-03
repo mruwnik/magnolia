@@ -184,8 +184,3 @@ class RingPositioner(Positioner):
             self.current_height = self.ring_height * self.current_ring + self.start_height
 
         return self.current_angle, self.current_height, self.BASE_RADIUS, self.bud_radius
-
-    def n_positions(self, n):
-        """Yield the positions of the next n rings."""
-        for i in range(n * self.buds_per_ring):
-            yield self._next_pos()

@@ -31,6 +31,12 @@ class Prog(QMainWindow):
         timer.start(20)
 
     def add_positioner(self):
+        """
+        Add a positioner.
+
+        The positioner will apply to the top of the meristem. The type is taken
+        from the positioners selector.
+        """
         pos_name = self.ui.positioners.currentText()
         positioner_classes = {
             'Ring positioner': RingPositioner
@@ -41,9 +47,11 @@ class Prog(QMainWindow):
         )
         self.used_positioners.append(segment)
 
+        # add the new segment setter to the displayed list
         segment.setObjectName(pos_name)
         self.ui.positioner_settings_container.insertWidget(0, segment)
 
+        # setup the delete button to remove the segment if desired
         def remove_segment(*args):
             self.ui.positioner_settings_container.removeWidget(segment)
             self.used_positioners.remove(segment)
@@ -52,16 +60,16 @@ class Prog(QMainWindow):
         segment.delete_button.pressed.connect(remove_segment)
 
     def redraw(self):
+        """Reposition all buds according to the current settings."""
         buds = self.meristem.next_or_new()
-        i, angle, height, radius, scale = 0, 0, 0, 0, 0
+        angle, height, radius, scale = 0, 0, 0, 0
 
         for pos_setter in self.used_positioners:
             positioner = pos_setter.positioner(angle, height + scale)
             for angle, height, radius, scale in positioner.n_positions(pos_setter.to_add):
                 next(buds).update_pos(angle, height, radius, scale)
-                i += 1
 
-        self.meristem.truncate(i)
+        self.meristem.truncate(sum(p.to_add for p in self.used_positioners))
         signaler.refresh_needed.emit()
 
     def connect_views(self):

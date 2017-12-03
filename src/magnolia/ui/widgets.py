@@ -66,6 +66,7 @@ class Segment(QWidget):
 
     @property
     def to_add(self):
+        """Return how many buds should be modified according to the settings of this postioner."""
         return int(self.to_add_input.text() or 0)
 
     def text_line(self, name, default=None):
@@ -114,9 +115,15 @@ class RingSegment(Segment):
         self.controls.addWidget(self.to_add_input)
 
     def positioner(self, start_angle, start_height):
+        """Get a positioner for the current settings."""
         return self.positioner_class(
             math.radians(float(self.angle.text() or 0)),
             int(self.per_ring.text() or 0),
             start_angle=start_angle,
             start_height=start_height,
         )
+
+    @property
+    def to_add(self):
+        """The amount of buds to add."""
+        return int(self.to_add_input.text() or 0) * int(self.per_ring.text() or 0)
