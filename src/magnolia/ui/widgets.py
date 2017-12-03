@@ -2,7 +2,7 @@ import math
 
 from PyQt5.QtWidgets import (
     QWidget, QHBoxLayout, QVBoxLayout, QLabel, QSizePolicy, QSpacerItem,
-    QPushButton, QLineEdit,
+    QPushButton, QLineEdit, QCheckBox,
 )
 
 
@@ -60,6 +60,12 @@ class Segment(QWidget):
 
         self.controls.addWidget(self.delete_button)
 
+    def checkbox(self, name, is_checked=False):
+        checkBox = QCheckBox(self)
+        checkBox.setObjectName(name)
+        checkBox.setChecked(is_checked)
+        return checkBox
+
     def make_controls(self):
         """Add all controls needed for a given meristem to be set up."""
         self.to_add_input = None
@@ -69,14 +75,14 @@ class Segment(QWidget):
         """Return how many buds should be modified according to the settings of this postioner."""
         return int(self.to_add_input.text() or 0)
 
-    def text_line(self, name, default=None):
+    def text_line(self, name, default=None, width=30):
         """Make a text input with the given name and default value."""
         text_line = QLineEdit(self)
         text_line.setObjectName(name)
         if default:
             text_line.setText(str(default))
 
-        text_line.setFixedWidth(30)
+        text_line.setFixedWidth(width)
         sizePolicy = QSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(1)
@@ -136,8 +142,13 @@ class DecreasingRingSegment(RingSegment):
     def make_controls(self):
         """Add all controls needed for a given meristem to be set up."""
         self.controls.addWidget(self.make_label('delta_label', 'decrease by:'))
-        self.delta = self.text_line('set_delta', 0.2)
+        self.delta = self.text_line('set_delta', 0.1, 35)
         self.controls.addWidget(self.delta)
+
+        self.controls.addWidget(self.make_label('z_scale_label', 'scale radius:'))
+        self.scale_radius = self.checkbox('scale_radius')
+        self.controls.addWidget(self.scale_radius)
+
         return super().make_controls()
 
     def positioner(self, start_angle, start_height):
@@ -146,6 +157,7 @@ class DecreasingRingSegment(RingSegment):
             math.radians(float(self.angle.text() or 0)),
             int(self.per_ring.text() or 0),
             delta=float(self.delta.text() or 0.0),
+            scale_radius=self.scale_radius.isChecked(),
             start_angle=start_angle,
             start_height=start_height,
         )

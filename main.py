@@ -30,14 +30,15 @@ class Prog(QMainWindow):
         timer.timeout.connect(self.ui.mainCanvas.update)
         timer.start(20)
 
-    def add_positioner(self):
+    def add_positioner(self, pos_name):
         """
         Add a positioner.
 
         The positioner will apply to the top of the meristem. The type is taken
         from the positioners selector.
+
+        :param str pos_name: the name pf the positioner to be used
         """
-        pos_name = self.ui.positioners.currentText()
         positioner_classes = {
             'Ring positioner': RingPositioner,
             'Decreasing ring positioner': ChangingRingPositioner,
@@ -75,8 +76,8 @@ class Prog(QMainWindow):
 
     def connect_views(self):
         signaler.drawable_selected.connect(self.bud_selected)
-        self.ui.add_segment.pressed.connect(self.add_positioner)
         self.ui.redrawButton.pressed.connect(self.redraw)
+        self.ui.positioners.activated['QString'].connect(self.add_positioner)
 
     def bud_selected(self, bud):
         """Handle a bud being selected. It displays the selected bud's neighbours."""

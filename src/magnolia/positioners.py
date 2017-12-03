@@ -171,6 +171,11 @@ class RingPositioner(Positioner):
         lat *= self.BASE_RADIUS
         return math.sqrt(abs(4*self.bud_radius**2 - lat**2))
 
+    @property
+    def ring_radius(self):
+        """Return the radius of each ring."""
+        return self.BASE_RADIUS
+
     def reset(self):
         """Reset the positioner."""
         super().reset()
@@ -191,12 +196,12 @@ class RingPositioner(Positioner):
         else:
             self._next_ring()
 
-        return self.current_angle, self.current_height, self.BASE_RADIUS, self.bud_radius
+        return self.current_angle, self.current_height, self.ring_radius, self.bud_radius
 
 
 class ChangingRingPositioner(RingPositioner):
 
-    def __init__(self, angle, per_ring, delta, **kwargs):
+    def __init__(self, angle, per_ring, delta, scale_radius=False, **kwargs):
         """Initialise the positioner.
 
         :param double angle: the angle by which each ring should be rotated relative to the previous one
@@ -206,6 +211,7 @@ class ChangingRingPositioner(RingPositioner):
         super().__init__(angle, per_ring, **kwargs)
         self.delta = delta
         self.base_bud_radius = self.bud_radius
+        self.scale_radius = scale_radius
 
     def reset(self):
         """Reset the positioner."""
@@ -216,3 +222,10 @@ class ChangingRingPositioner(RingPositioner):
         """Move to the next ring, decreasing the size of the buds."""
         self.bud_radius -= self.delta
         super()._next_ring()
+
+    @property
+    def ring_radius(self):
+        """Return the radius of each ring."""
+        if self.scale_radius:
+            return self.BASE_RADIUS - self.current_ring * self.delta * math.pi
+        return self.BASE_RADIUS

@@ -84,14 +84,6 @@ class Ui_MainWindow(object):
         self.positioners.setEditable(False)
         self.positioners.setObjectName("positioners")
         self.optionsContainer.addWidget(self.positioners)
-        self.add_segment = QtWidgets.QPushButton(self.mainWidget)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.add_segment.sizePolicy().hasHeightForWidth())
-        self.add_segment.setSizePolicy(sizePolicy)
-        self.add_segment.setObjectName("add_segment")
-        self.optionsContainer.addWidget(self.add_segment)
         self.redrawButton = QtWidgets.QPushButton(self.mainWidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -124,7 +116,6 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Magnolia"))
-        self.add_segment.setText(_translate("MainWindow", "Add segment"))
         self.redrawButton.setText(_translate("MainWindow", "redraw"))
 
 from magnolia.ui.canvas import OGLCanvas
