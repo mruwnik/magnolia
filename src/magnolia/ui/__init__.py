@@ -6,11 +6,12 @@ from magnolia.ui.objloader import MeshData, OBJReader
 from magnolia.ui.drawables import Drawable, MeshDrawable, MultiDrawable
 from magnolia.ui.flat import FlatStem
 from magnolia.ui.signals import signaler
-from magnolia.ui.widgets import RingSegment
+from magnolia.ui.widgets import RingSegment, DecreasingRingSegment
 
 
 positioners = OrderedDict((
     (RingSegment.name, RingSegment),
+    (DecreasingRingSegment.name, DecreasingRingSegment),
 ))
 
 __all__ = [

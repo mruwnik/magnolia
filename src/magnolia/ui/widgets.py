@@ -127,3 +127,25 @@ class RingSegment(Segment):
     def to_add(self):
         """The amount of buds to add."""
         return int(self.to_add_input.text() or 0) * int(self.per_ring.text() or 0)
+
+
+class DecreasingRingSegment(RingSegment):
+
+    name = 'Decreasing ring positioner'
+
+    def make_controls(self):
+        """Add all controls needed for a given meristem to be set up."""
+        self.controls.addWidget(self.make_label('delta_label', 'decrease by:'))
+        self.delta = self.text_line('set_delta', 0.2)
+        self.controls.addWidget(self.delta)
+        return super().make_controls()
+
+    def positioner(self, start_angle, start_height):
+        """Get a positioner for the current settings."""
+        return self.positioner_class(
+            math.radians(float(self.angle.text() or 0)),
+            int(self.per_ring.text() or 0),
+            delta=float(self.delta.text() or 0.0),
+            start_angle=start_angle,
+            start_height=start_height,
+        )

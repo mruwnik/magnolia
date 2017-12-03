@@ -2,7 +2,7 @@ from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from magnolia.ui import Ui_MainWindow, signaler, positioners
-from magnolia.positioners import RingPositioner
+from magnolia.positioners import RingPositioner, ChangingRingPositioner
 from magnolia.graph import BudGraph
 
 
@@ -39,7 +39,8 @@ class Prog(QMainWindow):
         """
         pos_name = self.ui.positioners.currentText()
         positioner_classes = {
-            'Ring positioner': RingPositioner
+            'Ring positioner': RingPositioner,
+            'Decreasing ring positioner': ChangingRingPositioner,
         }
         segment = positioners[pos_name](
             positioner_classes[pos_name],

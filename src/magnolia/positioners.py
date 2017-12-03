@@ -158,19 +158,30 @@ class RingPositioner(Positioner):
         self.angle = angle
         self.angle_step = 2 * math.pi / per_ring
         self.current_ring_place = self.current_ring = 0
+        self._height = height
 
-        self.ring_height = height
-        if not height:
-            lat = abs(angle % self.angle_step)
-            if lat > self.angle_step / 2:
-                lat = self.angle_step - lat
-            lat *= self.BASE_RADIUS
-            self.ring_height = math.sqrt(4*self.bud_radius**2 - lat**2)
+    @property
+    def ring_height(self):
+        if self._height:
+            return self._height
+
+        lat = abs(self.angle % self.angle_step)
+        if lat > self.angle_step / 2:
+            lat = self.angle_step - lat
+        lat *= self.BASE_RADIUS
+        return math.sqrt(abs(4*self.bud_radius**2 - lat**2))
 
     def reset(self):
         """Reset the positioner."""
         super().reset()
         self.current_ring_place = self.current_ring = 0
+
+    def _next_ring(self):
+        """Move to the next ring."""
+        self.current_ring += 1
+        self.current_ring_place = 1
+        self.current_angle = Bud.norm_angle(self.angle * self.current_ring + self.start_angle)
+        self.current_height += self.ring_height
 
     def _next_pos(self):
         """Return the parameters of the next bud to be positioned."""
@@ -178,9 +189,30 @@ class RingPositioner(Positioner):
             self.current_angle -= self.angle_step
             self.current_ring_place += 1
         else:
-            self.current_ring += 1
-            self.current_ring_place = 1
-            self.current_angle = Bud.norm_angle(self.angle * self.current_ring + self.start_angle)
-            self.current_height = self.ring_height * self.current_ring + self.start_height
+            self._next_ring()
 
         return self.current_angle, self.current_height, self.BASE_RADIUS, self.bud_radius
+
+
+class ChangingRingPositioner(RingPositioner):
+
+    def __init__(self, angle, per_ring, delta, **kwargs):
+        """Initialise the positioner.
+
+        :param double angle: the angle by which each ring should be rotated relative to the previous one
+        :param int per_ring: how many buds per ring
+        :param double delta: by how much the buds of each ring should be smaller than the previous
+        """
+        super().__init__(angle, per_ring, **kwargs)
+        self.delta = delta
+        self.base_bud_radius = self.bud_radius
+
+    def reset(self):
+        """Reset the positioner."""
+        super().reset()
+        self.bud_radius = self.base_bud_radius
+
+    def _next_ring(self):
+        """Move to the next ring, decreasing the size of the buds."""
+        self.bud_radius -= self.delta
+        super()._next_ring()
