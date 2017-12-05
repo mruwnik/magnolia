@@ -67,9 +67,10 @@ class Prog(QMainWindow):
         angle, height, radius, scale = 0, 0, 0, 0
 
         for pos_setter in self.used_positioners:
-            positioner = pos_setter.positioner(angle, height + scale)
+            positioner = pos_setter.positioner(angle, height)
             for angle, height, radius, scale in positioner.n_positions(pos_setter.to_add):
                 next(buds).update_pos(angle, height, radius, scale)
+            angle, height, radius, scale = positioner._next_pos()
 
         self.meristem.truncate(sum(p.to_add for p in self.used_positioners))
         signaler.refresh_needed.emit()

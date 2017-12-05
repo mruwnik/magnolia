@@ -12,7 +12,7 @@ class Positioner(BudGraph):
         super().__init__()
         self.colour = colour
         self.bud_radius = size if size else self.BASE_RADIUS
-        self.start_height = self.current_height = start_height + self.bud_radius
+        self.start_height = self.current_height = start_height
         self.start_angle = self.current_angle = start_angle
 
     def new(self):
