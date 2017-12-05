@@ -37,6 +37,22 @@ class FlatStem(MeristemDisplay, QGraphicsView):
         zoom = math.pi * 300/(dist + self.zoom + 11)
         self.scale(zoom, zoom)
 
+    def draw_side_bars(self):
+        """Draw the bounding lines of the meristem."""
+        if not self.displayables:
+            return
+
+        side_bar = self.thin_line(Qt.blue)
+        top = max([b.radius for b in self.displayables if b.height < b.scale] or [0])
+        for height in range(int(round(self.objects.height))):
+            bottom = top
+            top = max([b.radius for b in self.displayables if abs(b.height - height) < b.scale] or [0])
+
+            bot_side_bar_pos = math.pi * bottom
+            top_side_bar_pos = math.pi * top
+            self.scene.addLine(-bot_side_bar_pos, -height + 0.5, -top_side_bar_pos, -height - 0.5, side_bar)
+            self.scene.addLine(bot_side_bar_pos, -height + 0.5, top_side_bar_pos, -height - 0.5, side_bar)
+
     def redraw(self):
         """Redraw all objects on the scene."""
         for item in self.scene.items():
@@ -46,12 +62,7 @@ class FlatStem(MeristemDisplay, QGraphicsView):
         for bud in self.displayables:
             self.make_item(bud)
 
-        # Draw the bounding lines of the meristem
-        side_bar = self.thin_line(Qt.blue)
-        for meristem in self.displayables:
-            side_bar_pos = math.pi * meristem.radius
-            self.scene.addLine(-side_bar_pos, 1, -side_bar_pos, -meristem.height - 2, side_bar)
-            self.scene.addLine(side_bar_pos, 1, side_bar_pos, -meristem.height - 2, side_bar)
+        self.draw_side_bars()
 
         self.set_scale()
 

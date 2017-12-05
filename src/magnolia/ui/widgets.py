@@ -155,8 +155,8 @@ class DecreasingRingSegment(RingSegment):
         spacerItem = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.controls2.addItem(spacerItem)
 
-        self.controls2.addWidget(self.make_label('delta_label', 'decrease by:'))
-        self.delta = self.text_line('set_delta', 0.1, 35)
+        self.controls2.addWidget(self.make_label('delta_label', 'decrease by (%):'))
+        self.delta = self.text_line('set_delta', 10, 35)
         self.controls2.addWidget(self.delta)
 
         self.controls2.addWidget(self.make_label('z_scale_label', 'scale radius:'))

@@ -201,15 +201,16 @@ class RingPositioner(Positioner):
 
 class ChangingRingPositioner(RingPositioner):
 
-    def __init__(self, angle, per_ring, delta, scale_radius=False, **kwargs):
+    def __init__(self, angle, per_ring, scale, scale_radius=False, **kwargs):
         """Initialise the positioner.
 
         :param double angle: the angle by which each ring should be rotated relative to the previous one
         :param int per_ring: how many buds per ring
-        :param double delta: by how much the buds of each ring should be smaller than the previous
+        :param double scale: by how much the buds of each ring should be smaller than the previous (percentage)
+        :param bool scale_radius: whether to scale the radius, too
         """
         super().__init__(angle, per_ring, **kwargs)
-        self.delta = delta
+        self.scale = scale / 100.0
         self.base_bud_radius = self.bud_radius
         self.scale_radius = scale_radius
 
@@ -220,7 +221,7 @@ class ChangingRingPositioner(RingPositioner):
 
     def _next_ring(self):
         """Move to the next ring, decreasing the size of the buds."""
-        self.bud_radius -= self.delta
+        self.bud_radius -= self.scale * self.bud_radius
         super()._next_ring()
 
     @property

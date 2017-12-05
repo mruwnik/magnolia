@@ -275,10 +275,13 @@ class BudGraph(Meristem):
         super(BudGraph, self).__init__(*args, **kwargs)
         self.nodes = {}
 
-    def add(self, *args):
-        """Add the provided items."""
-        super(BudGraph, self).add(*args)
-        for bud in args:
+    def truncate(self, *args):
+        super().truncate(*args)
+        self.graph()
+
+    def graph(self):
+        self.nodes = {}
+        for bud in self.displayables:
             self.add_node(bud)
 
     def add_node(self, bud):

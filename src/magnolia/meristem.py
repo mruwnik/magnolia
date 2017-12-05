@@ -200,14 +200,20 @@ class Meristem(MultiDrawable):
     def radius(self):
         """Get the actual radius of the meristem.
 
-        The meristem's radius is defined as the max radius of all its buds."""
+        The meristem's radius is defined as the max radius of all its buds.
+        """
+        if not self.objects:
+            return 0
         return max(bud.radius for bud in self.objects)
 
     @property
     def height(self):
         """Get the height of the meristem.
 
-        The meristem's height is defined as the max height of all its buds."""
+        The meristem's height is defined as the max height of all its buds.
+        """
+        if not self.objects:
+            return 0
         return max(bud.height + bud.scale for bud in self.objects)
 
     def bounds_test(self, x, y, offset):

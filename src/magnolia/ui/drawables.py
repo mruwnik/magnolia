@@ -149,7 +149,7 @@ class MultiDrawable(Drawable):
         return self.objects
 
     def clear(self):
-        self.selected = []
+        self.selected = None
         self.objects = []
         self.calculate_lists()
 
