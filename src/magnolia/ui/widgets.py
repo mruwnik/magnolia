@@ -31,18 +31,22 @@ class Segment(QWidget):
         self.main_box = QVBoxLayout(self)
         self.main_box.setObjectName('main_box')
 
+        self.label_box = QHBoxLayout()
+
         self.label = self.make_label('label', self.name)
-        self.main_box.addWidget(self.label)
+        self.label_box.addWidget(self.label)
+        self.make_delete_button()
+
+        self.main_box.addLayout(self.label_box)
 
     def init_controls(self):
-        """Add all controls."""
+        """Add all controls needed for a given meristem to be set up."""
+        self.to_add_input = None
+
         self.controls = QHBoxLayout()
         self.controls.setObjectName('controls')
         spacerItem = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
         self.controls.addItem(spacerItem)
-
-        self.make_controls()
-        self.make_delete_button()
 
         self.main_box.addLayout(self.controls)
 
@@ -50,7 +54,7 @@ class Segment(QWidget):
         """Add a delete button that will remove this segment."""
         # put a spacer between the button and the controls
         spacerItem = QSpacerItem(20, 0, QSizePolicy.Expanding, QSizePolicy.Fixed)
-        self.controls.addItem(spacerItem)
+        self.label_box.addItem(spacerItem)
 
         # create the actual button
         self.delete_button = QPushButton(self)
@@ -58,17 +62,13 @@ class Segment(QWidget):
         self.delete_button.setText('X')
         self.delete_button.setFixedWidth(20)
 
-        self.controls.addWidget(self.delete_button)
+        self.label_box.addWidget(self.delete_button)
 
     def checkbox(self, name, is_checked=False):
         checkBox = QCheckBox(self)
         checkBox.setObjectName(name)
         checkBox.setChecked(is_checked)
         return checkBox
-
-    def make_controls(self):
-        """Add all controls needed for a given meristem to be set up."""
-        self.to_add_input = None
 
     @property
     def to_add(self):
@@ -106,8 +106,13 @@ class RingSegment(Segment):
 
     name = 'Ring positioner'
 
-    def make_controls(self):
+    def init_controls(self):
         """Add all controls needed for a given meristem to be set up."""
+        self.controls = QHBoxLayout()
+        self.controls.setObjectName('controls')
+        spacerItem = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.controls.addItem(spacerItem)
+
         self.controls.addWidget(self.make_label('angle_label', 'angle:'))
         self.angle = self.text_line('set_angle', 60)
         self.controls.addWidget(self.angle)
@@ -119,6 +124,8 @@ class RingSegment(Segment):
         self.controls.addWidget(self.make_label('rings_label', 'rings:'))
         self.to_add_input = self.text_line('set_rings', 5)
         self.controls.addWidget(self.to_add_input)
+
+        self.main_box.addLayout(self.controls)
 
     def positioner(self, start_angle, start_height):
         """Get a positioner for the current settings."""
@@ -139,17 +146,24 @@ class DecreasingRingSegment(RingSegment):
 
     name = 'Decreasing ring positioner'
 
-    def make_controls(self):
+    def init_controls(self):
         """Add all controls needed for a given meristem to be set up."""
-        self.controls.addWidget(self.make_label('delta_label', 'decrease by:'))
+        super().init_controls()
+
+        self.controls2 = QHBoxLayout()
+        self.controls2.setObjectName('controls2')
+        spacerItem = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.controls2.addItem(spacerItem)
+
+        self.controls2.addWidget(self.make_label('delta_label', 'decrease by:'))
         self.delta = self.text_line('set_delta', 0.1, 35)
-        self.controls.addWidget(self.delta)
+        self.controls2.addWidget(self.delta)
 
-        self.controls.addWidget(self.make_label('z_scale_label', 'scale radius:'))
+        self.controls2.addWidget(self.make_label('z_scale_label', 'scale radius:'))
         self.scale_radius = self.checkbox('scale_radius')
-        self.controls.addWidget(self.scale_radius)
+        self.controls2.addWidget(self.scale_radius)
 
-        return super().make_controls()
+        self.main_box.addLayout(self.controls2)
 
     def positioner(self, start_angle, start_height):
         """Get a positioner for the current settings."""

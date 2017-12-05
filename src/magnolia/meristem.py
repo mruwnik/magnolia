@@ -56,7 +56,7 @@ class Bud(MeshDrawable):
         self.angle = kwargs.pop('angle', 0)
         self.height = kwargs.pop('height', 0)
 
-        kwargs['colours'] = kwargs.pop('fill_colour', self.WHITE)
+        kwargs['colours'] = kwargs.pop('fill_colour', self.BLUE)
         if 'mesh' not in kwargs:
             kwargs['mesh'] = self.SPHERE_MODEL
         kwargs.pop('offset', None)
