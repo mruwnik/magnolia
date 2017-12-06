@@ -107,6 +107,20 @@
       <item>
        <layout class="QVBoxLayout" name="optionsContainer">
         <item>
+         <widget class="QCheckBox" name="show_axes">
+          <property name="text">
+           <string>Show axes</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="show_bud_axes">
+          <property name="text">
+           <string>Show paristichies on axis</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <layout class="QVBoxLayout" name="positioner_settings_container" stretch="0">
           <item>
            <spacer name="verticalSpacer">

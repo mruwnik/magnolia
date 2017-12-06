@@ -12,11 +12,6 @@ class OGLCanvas(MeristemDisplay, QOpenGLWidget):
     PERSPECTIVE = (60, 0.1, 1280.0)
     """The perspective matrix settings (angle, nearZ, farZ)"""
 
-    def __init__(self, *args, **kwargs):
-        """Initialise a new object."""
-        super(OGLCanvas, self).__init__(*args, **kwargs)
-        self.lines = []
-
     def _load_program(self, vertex_shader, fragment_shader):
         """Load the given shader programs."""
         self.program = QOpenGLShaderProgram(self)
@@ -118,9 +113,9 @@ class OGLCanvas(MeristemDisplay, QOpenGLWidget):
 
             self.gl.glDrawArrays(self.gl.GL_TRIANGLES, 0, self.objects.points_count)
 
-        if self.lines:
+        if self._lines:
             self.gl.glLineWidth(3)
-            for line in self.lines:
+            for line in self._lines:
                 self.loadAttrArray(self.m_posAttr, line.vertices)
                 self.loadAttrArray(self.m_colAttr, line.colours)
 

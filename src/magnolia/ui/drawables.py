@@ -258,6 +258,7 @@ class MeristemDisplay(object):
     def __init__(self, *args, **kwargs):
         super(MeristemDisplay, self).__init__(*args, **kwargs)
         self._objects = MultiDrawable([])
+        self._lines = []
         self.viewing_angle = [0.0, 0.0]
 
         # set default settings

@@ -68,6 +68,12 @@ class Ui_MainWindow(object):
         self.optionsContainer.setContentsMargins(11, 11, 11, 11)
         self.optionsContainer.setSpacing(6)
         self.optionsContainer.setObjectName("optionsContainer")
+        self.show_axes = QtWidgets.QCheckBox(self.mainWidget)
+        self.show_axes.setObjectName("show_axes")
+        self.optionsContainer.addWidget(self.show_axes)
+        self.show_bud_axes = QtWidgets.QCheckBox(self.mainWidget)
+        self.show_bud_axes.setObjectName("show_bud_axes")
+        self.optionsContainer.addWidget(self.show_bud_axes)
         self.positioner_settings_container = QtWidgets.QVBoxLayout()
         self.positioner_settings_container.setContentsMargins(11, 11, 11, 11)
         self.positioner_settings_container.setSpacing(6)
@@ -116,6 +122,8 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Magnolia"))
+        self.show_axes.setText(_translate("MainWindow", "Show axes"))
+        self.show_bud_axes.setText(_translate("MainWindow", "Show paristichies on axis"))
         self.redrawButton.setText(_translate("MainWindow", "redraw"))
 
 from magnolia.ui.canvas import OGLCanvas

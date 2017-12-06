@@ -300,13 +300,18 @@ class BudGraph(Meristem):
         """Get a list of all buds that can be reached by the provided bud."""
         return self.nodes[bud]
 
-    def axes(self, bud):
+    def axis_checkers(self, bud):
         """Yield functions describing all possible axes through the given bud.
 
         A axis is defined as any line that goes through a bud and at least 2 of its neighbours.
         """
         for neighbour, checked in self._paired(bud):
             yield on_helix_checker(neighbour, checked)
+
+    def axes(self, bud):
+        """Yield functions describing all axes going through the given bud."""
+        for neighbour, checked in self._paired(bud):
+            yield helix(neighbour, checked)
 
     def _paired(self, bud):
         """Yield all possible axis pairs through the given bud.

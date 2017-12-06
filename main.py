@@ -1,7 +1,7 @@
 from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
-from magnolia.ui import Ui_MainWindow, signaler, positioners
+from magnolia.ui import Ui_MainWindow, signaler, positioners, LineDrawable
 from magnolia.positioners import RingPositioner, ChangingRingPositioner
 from magnolia.graph import BudGraph
 
@@ -89,14 +89,21 @@ class Prog(QMainWindow):
         for b in self.meristem.objects:
             b.colours = b.BLUE
 
-        # Loop through all reachable buds, colouring them relative to their distance
-        for b in self.meristem.neighbours(bud):
-            d = bud.distance(b)
-            b.colours = (d/bud.radius, 1, 1 - d/bud.radius)
-
-            for line in self.meristem.axes(bud):
+        # show axes if enabled
+        if self.ui.show_bud_axes.isChecked():
+            for line in self.meristem.axis_checkers(bud):
                 for b in self.meristem.on_line(line):
                     b.colours = (1, 1, 0.5)
+
+        # colour buds on axes, if enabled
+        if self.ui.show_axes.isChecked():
+            lines = [
+                LineDrawable(helix(self.meristem.height), bud.RED)
+                for helix in self.meristem.axes(bud)
+            ]
+        else:
+            lines = []
+        self.ui.mainCanvas._lines = self.ui.flatStem._lines = lines
 
         bud.colours = bud.GREEN
         self.meristem.refresh_field('colours')
