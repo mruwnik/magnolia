@@ -4,6 +4,7 @@ from itertools import count
 
 from PyQt5.QtGui import QVector3D
 
+from magnolia.math.geometry import norm_angle
 from magnolia.ui import MultiDrawable, MeshDrawable, OBJReader
 
 
@@ -110,7 +111,7 @@ class Bud(MeshDrawable):
     @staticmethod
     def norm_angle(angle):
         """Normalize the given angle (wrapping around π)."""
-        return ((angle + math.pi) % (2 * math.pi) - math.pi)
+        return norm_angle(angle)
 
     def angle2x(self, angle):
         """Return the given angle in pseudo 2D coordinates.

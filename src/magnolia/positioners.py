@@ -1,6 +1,7 @@
 import math
 from magnolia.meristem import Bud
-from magnolia.graph import BudGraph, closest_bud, first_gap
+from magnolia.graph import BudGraph
+from magnolia.geometry import closest_circle, first_gap
 
 
 class Positioner(BudGraph):
@@ -263,7 +264,7 @@ class LowestAvailablePositioner(Positioner):
             self.current_angle, self.current_height = first_gap(self._front, self.bud_radius/self.BASE_RADIUS)
         # proceed to the normal first empty space algorithm
         else:
-            self.current_angle, self.current_height = closest_bud(
+            self.current_angle, self.current_height = closest_circle(
                 self._front[-2], self._front[-1], self.bud_radius/self.BASE_RADIUS)
 
         self._front.append((self.current_angle, self.current_height, self.bud_radius/self.BASE_RADIUS))
