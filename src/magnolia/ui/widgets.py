@@ -170,8 +170,38 @@ class DecreasingRingSegment(RingSegment):
         return self.positioner_class(
             math.radians(float(self.angle.text() or 0)),
             int(self.per_ring.text() or 0),
-            delta=float(self.delta.text() or 0.0),
+            scale=float(self.delta.text() or 0.0),
             scale_radius=self.scale_radius.isChecked(),
+            start_angle=start_angle,
+            start_height=start_height,
+        )
+
+
+class LowestAvailableSegment(Segment):
+
+    name = 'Lowest available space positioner'
+
+    def init_controls(self):
+        """Add all controls needed for a given meristem to be set up."""
+        self.controls = QHBoxLayout()
+        self.controls.setObjectName('controls')
+        spacerItem = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.controls.addItem(spacerItem)
+
+        self.controls.addWidget(self.make_label('buds_to_add_label', 'buds to add:'))
+        self.to_add_input = self.text_line('buds_to_add', 4)
+        self.controls.addWidget(self.to_add_input)
+
+        self.controls.addWidget(self.make_label('size_label', 'bud size (as fraction of R):'))
+        self.bud_size = self.text_line('bud_size', 2)
+        self.controls.addWidget(self.bud_size)
+
+        self.main_box.addLayout(self.controls)
+
+    def positioner(self, start_angle, start_height):
+        """Get a positioner for the current settings."""
+        return self.positioner_class(
+            start_size=float(self.bud_size.text() or 0),
             start_angle=start_angle,
             start_height=start_height,
         )

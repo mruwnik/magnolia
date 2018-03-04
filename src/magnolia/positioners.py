@@ -1,6 +1,6 @@
 import math
 from magnolia.meristem import Bud
-from magnolia.graph import BudGraph
+from magnolia.graph import BudGraph, closest_bud, first_gap
 
 
 class Positioner(BudGraph):
@@ -155,9 +155,9 @@ class RingPositioner(Positioner):
 
         super().__init__(**kwargs)
         self.buds_per_ring = per_ring
-        self.angle = angle
         self.angle_step = 2 * math.pi / per_ring
         self.current_ring_place = self.current_ring = 0
+        self.angle = angle
         self._height = height
 
     @property
@@ -230,3 +230,41 @@ class ChangingRingPositioner(RingPositioner):
         if self.scale_radius:
             return self.BASE_RADIUS - self.current_ring * self.delta * math.pi
         return self.BASE_RADIUS
+
+
+class LowestAvailablePositioner(Positioner):
+
+    def __init__(self, start_size, **kwargs):
+        self.start_size = start_size
+        self._front = []
+        super().__init__(size=self.BASE_RADIUS/start_size, **kwargs)
+
+    def reset(self):
+        """Reset the positioner."""
+        super().reset()
+        self._front = []
+
+    def _next_pos(self):
+        """
+        Get the position of the next item.
+
+        This can be calculated according to various algorithms and based
+        on the current state of the meristem.
+
+        :rtype: tuple
+        :returns: a tuple with the (angle, height, radius, scale) of the next bud
+        """
+        # first check if the whole bottom is full - if not, just put the bud in the first available hole
+        if len(self._front) < 2:
+            self.current_angle = Bud.norm_angle(self.current_angle + math.pi)
+        # if the newest bud is on ground level then stick the bud in the first hole on ground level. This split
+        # is to allow the next function to always assume that it gets touching buds. This makes things a lot easier.
+        elif self._front[-1][1] == 0 and first_gap(self._front, self.bud_radius/self.BASE_RADIUS):
+            self.current_angle, self.current_height = first_gap(self._front, self.bud_radius/self.BASE_RADIUS)
+        # proceed to the normal first empty space algorithm
+        else:
+            self.current_angle, self.current_height = closest_bud(
+                self._front[-2], self._front[-1], self.bud_radius/self.BASE_RADIUS)
+
+        self._front.append((self.current_angle, self.current_height, self.bud_radius/self.BASE_RADIUS))
+        return self.current_angle, self.current_height, self.BASE_RADIUS, self.bud_radius

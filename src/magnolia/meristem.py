@@ -193,8 +193,8 @@ class Meristem(MultiDrawable):
 
         while True:
             bud = Bud()
-            yield bud
             self.add(bud)
+            yield bud
 
     @property
     def radius(self):

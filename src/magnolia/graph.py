@@ -1,9 +1,10 @@
 import math
+from typing import List, Tuple, Iterable, Callable
 
-from magnolia.meristem import Meristem
+from magnolia.meristem import Meristem, Bud
 
 
-def dot_product(v1, v2):
+def dot_product(v1: Iterable, v2: Iterable) -> float:
     """Calculate the dot products of the provided vectors.
 
     If the vectors have different lengths, the extra values will be discarded from the longer one.
@@ -11,7 +12,7 @@ def dot_product(v1, v2):
     return sum(i*j for i, j in zip(v1, v2))
 
 
-def vect_diff(v1, v2):
+def vect_diff(v1: Iterable, v2: Iterable) -> List[float]:
     """Subtract the provided vectors from each other.
 
     If the vectors have different lengths, the extra values will be discarded from the longer one.
@@ -19,7 +20,7 @@ def vect_diff(v1, v2):
     return [i - j for i, j in zip(v1, v2)]
 
 
-def vect_mul(v, scalar):
+def vect_mul(v: Iterable, scalar: float) -> List[float]:
     """Multiply the vector by the scalar."""
     return [i * scalar for i in v]
 
@@ -36,12 +37,17 @@ def cross_product(v1, v2):
     return (i, j, k)
 
 
-def length(vector):
+def length(vector: Iterable) -> float:
     """Return the length of the provided vector."""
     return math.sqrt(sum(i**2 for i in vector))
 
 
-def dir_vector(b1, b2):
+def cylin_distance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
+    """Calculate the distance between the given points, in cylinder coords."""
+    return length((Bud.norm_angle(p1[0] - p2[0]), p1[1] - p2[1]))
+
+
+def dir_vector(b1: Bud, b2: Bud) -> tuple:
     """Return a direction vector for the provided buds."""
     return (b1.norm_angle(b1.angle - b2.angle), b1.height - b2.height, b1.radius - b2.radius)
 
@@ -241,6 +247,11 @@ def perendicular_plane_checker(b1, b2):
     return checker
 
 
+def by_height(buds: List[Bud]) -> List[Bud]:
+    """Return the given buds sorted by height."""
+    return sorted(buds, key=lambda b: b.height, reverse=True)
+
+
 def get_reachable(selected, buds):  # noqa
     """Filter the given buds for all that can be accessed by the selected bud without collisions.
 
@@ -268,6 +279,81 @@ def get_reachable(selected, buds):  # noqa
     return [tested] + get_reachable(selected, filtered)
 
 
+def first_gap(circles: List[Tuple[float, float, float]], radius: float) -> Tuple[float, float]:
+    """
+    Return the first available gap that will fit a circle of the given radius.
+
+    This simply loops around the circles, sorted by x, and whenever the distance between
+    2 circles is larger than 2*radius it deems that it's found a hole and returns the (x,y) that lies
+    between the 2 circles.
+    """
+    circles = sorted(circles, key=lambda x: x[0])
+    prev_x, _, prev_rad = circles[0]
+
+    for current_x, __, current_rad in circles[1:] + [circles[0]]:
+        dist = abs(Bud.norm_angle(prev_x + current_x))
+        if prev_rad + current_rad + 2*radius < dist:
+            return Bud.norm_angle(prev_x + dist/2), 0
+        prev_x, prev_rad = current_x, current_rad
+
+
+def flat_circle_overlap(
+        b1: Tuple[float, float, float], b2: Tuple[float, float, float], r: float) -> Tuple[float, float]:
+    """Return the higher overlap of 2 circles that are on the same height."""
+    x1, y1, r1 = b1
+    x2, y2, r2 = b2
+
+    # there are 2 possible intersections, both with the same x, but with different ys
+    x3 = -((r + r1)**2 - (r + r2)**2)/(2 * (x1 + x2))
+    y3 = math.sqrt((r + r1)**2 - (x3 - x1))
+
+    return Bud.norm_angle(x3), max(y1 + y3, y1 - y3)
+
+
+def closest_bud(b1: Tuple[float, float, float], b2: Tuple[float, float, float], radius: float) -> Tuple[float, float]:
+    """
+    Return the angle and height of a bud with the given radius as close a possible to the given buds.
+
+                     n *
+                      /   \
+                    / phi   \
+        n_b1   /             \  n_b2
+                /                  \
+              /                       \
+       b1  * -------------------------* b2
+                        b1_b2
+
+    This can be reduced to the intersection of 2 circles at b1 and b2, with radiuses of
+    b1,radius + radius and b2.radius + radius
+    """
+    n_b1 = b1[2] + radius
+    n_b2 = b2[2] + radius
+    b1_b2 = b1[2] + b2[2]
+
+    x1, y1, r1 = b1
+    x2, y2, r2 = b2
+
+    # check that the given circles are actually touching
+    if n_b1 + n_b2 < cylin_distance(b1, b2):
+        return Bud.norm_angle((b1[0] + b2[0]) / 2), (b1[1] + b2[1]) / 2
+
+    a = (n_b1**2 - n_b2**2 + b1_b2**2) / (2 * b1_b2)
+    h = math.sqrt(n_b1**2 - a**2)
+
+    midx = x1 + a * (x2 - x1)/b1_b2
+    midy = y1 + a * (y2 - y1)/b1_b2
+
+    x3_1 = midx + h*(y2 - y1)/b1_b2
+    y3_1 = midy - h*(x2 - x1)/b1_b2
+
+    x3_2 = midx - h*(y2 - y1)/b1_b2
+    y3_2 = midy + h*(x2 - x1)/b1_b2
+
+    if y3_1 > y3_2:
+        return Bud.norm_angle(x3_1), y3_1
+    return Bud.norm_angle(x3_2), y3_2
+
+
 class BudGraph(Meristem):
     """Represents a graph of all buds."""
 
@@ -284,7 +370,12 @@ class BudGraph(Meristem):
         for bud in self.displayables:
             self.add_node(bud)
 
-    def add_node(self, bud):
+    @property
+    def size(self) -> int:
+        """Get the amount of buds in the graph."""
+        return len(self.drawables)
+
+    def add_node(self, bud: Bud):
         """Add the given node to the graph, refreshing any previous connections that may get disrupted."""
         neighbours = get_reachable(bud, self.closest(bud))
         self.nodes[bud] = neighbours
@@ -292,15 +383,15 @@ class BudGraph(Meristem):
         # neighbours of each of its neighbours. This will fail if the new node is between
         # 2 other nodes. In that case both of them won't see each other, but will see the
         # new node, so everything should be ok
-# skip the check for now, as it's really slow
-#        for neighbour in neighbours:
-#            self.nodes[neighbour] = get_reachable(neighbour, self.closest(neighbour))
+        # skip the check for now, as it's really slow
+        #        for neighbour in neighbours:
+        #            self.nodes[neighbour] = get_reachable(neighbour, self.closest(neighbour))
 
-    def neighbours(self, bud):
+    def neighbours(self, bud: Bud) -> List[Bud]:
         """Get a list of all buds that can be reached by the provided bud."""
         return self.nodes[bud]
 
-    def axis_checkers(self, bud):
+    def axis_checkers(self, bud: Bud) -> Callable[[Bud], bool]:
         """Yield functions describing all possible axes through the given bud.
 
         A axis is defined as any line that goes through a bud and at least 2 of its neighbours.
@@ -308,12 +399,12 @@ class BudGraph(Meristem):
         for neighbour, checked in self._paired(bud):
             yield on_helix_checker(neighbour, checked)
 
-    def axes(self, bud):
+    def axes(self, bud: Bud) -> Callable[[float], Tuple[float, float, float]]:
         """Yield functions describing all axes going through the given bud."""
         for neighbour, checked in self._paired(bud):
             yield helix(neighbour, checked)
 
-    def _paired(self, bud):
+    def _paired(self, bud: Bud) -> Tuple[Bud, Bud]:
         """Yield all possible axis pairs through the given bud.
 
         A axis is defined as any line that goes through a bud and at least 2 (the pair) of its neighbours.
@@ -328,6 +419,37 @@ class BudGraph(Meristem):
                     paired += [neighbour, checked]
                     yield neighbour, checked
 
-    def on_line(self, line_checker):
+    def on_line(self, line_checker: Callable[[Bud], bool]) -> Iterable[Bud]:
         """Get all buds that are on the given line."""
         return filter(line_checker, self.displayables)
+
+    def touching(self, bud: Bud) -> List[Bud]:
+        return [b for b in self.displayables if b != bud and b.distance(bud) < (b.scale + bud.scale)]
+
+    def highest_left(self, bud: Bud) -> Bud:
+        for b in by_height(self.displayables):
+            if b != bud and b.distance(bud) < (b.scale + bud.scale) * 1.2 and bud.norm_angle(bud.angle - b.angle) > 0:
+                return b
+
+    @property
+    def front(self) -> List[Bud]:
+        """
+        Return the current front.
+
+        From https://doi.org/10.5586/asbp.3533: "a front is a zigzagging ring of
+        primordia encircling the cylinder, each primordium being tangent to one on its left and
+        one on its right. Moreover, any primordium above the front must be higher than any
+        primordium of the front."
+
+        :rtype: List[Bud]
+        :returns: a list of buds, comprising the current front.
+        """
+        top = by_height(self.displayables)[0]
+
+        def left(bud):
+            b = self.highest_left(bud)
+            if b and b != top:
+                return [bud] + left(b)
+            return [bud]
+
+        return left(top)

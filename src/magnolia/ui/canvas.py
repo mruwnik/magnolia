@@ -64,12 +64,12 @@ class OGLCanvas(MeristemDisplay, QOpenGLWidget):
     @property
     def camera_pos(self):
         """Return the camera's position."""
-        return QVector3D(0, 4, self.view_distance - self.zoom)
+        return QVector3D(0, self.objects.height / 2, self.view_distance - self.zoom)
 
     @property
     def camera_look_at(self):
         """A point at which the camera is pointed."""
-        return QVector3D(0, 4, 0)
+        return QVector3D(0, self.objects.height / 2, 0)
 
     @property
     def camera_normal(self):
