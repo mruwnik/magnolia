@@ -1,7 +1,7 @@
 import math
 from magnolia.meristem import Bud
 from magnolia.graph import BudGraph
-from magnolia.geometry import closest_circle, first_gap
+from magnolia.math.geometry import closest_circle, first_gap, front
 
 
 class Positioner(BudGraph):
@@ -235,15 +235,26 @@ class ChangingRingPositioner(RingPositioner):
 
 class LowestAvailablePositioner(Positioner):
 
-    def __init__(self, start_size, **kwargs):
+    def __init__(self, start_size, front=None, **kwargs):
         self.start_size = start_size
-        self._front = []
+        self.circles = front or []
         super().__init__(size=self.BASE_RADIUS/start_size, **kwargs)
 
     def reset(self):
         """Reset the positioner."""
         super().reset()
-        self._front = []
+        self.circles = []
+
+    def lowest_on_front(self, checked_front):
+        lastx, lasty, lastr = checked_front[-1]
+        first = [lastx + 2 * math.pi, lasty, lastr]
+        offsetted_front = [first] + checked_front
+
+        potenials = [
+            closest_circle(prev, checked, self.bud_radius/self.BASE_RADIUS)
+            for checked, prev in zip(checked_front, offsetted_front)
+        ]
+        return min(*potenials,  key=lambda c: c[1])
 
     def _next_pos(self):
         """
@@ -255,17 +266,26 @@ class LowestAvailablePositioner(Positioner):
         :rtype: tuple
         :returns: a tuple with the (angle, height, radius, scale) of the next bud
         """
-        # first check if the whole bottom is full - if not, just put the bud in the first available hole
-        if len(self._front) < 2:
+        current_front = front(self.circles)
+
+        # first check if this is the first or second bud - if so, just insert them
+        if len(self.circles) < 2:
             self.current_angle = Bud.norm_angle(self.current_angle + math.pi)
+
         # if the newest bud is on ground level then stick the bud in the first hole on ground level. This split
         # is to allow the next function to always assume that it gets touching buds. This makes things a lot easier.
-        elif self._front[-1][1] == 0 and first_gap(self._front, self.bud_radius/self.BASE_RADIUS):
-            self.current_angle, self.current_height = first_gap(self._front, self.bud_radius/self.BASE_RADIUS)
-        # proceed to the normal first empty space algorithm
-        else:
-            self.current_angle, self.current_height = closest_circle(
-                self._front[-2], self._front[-1], self.bud_radius/self.BASE_RADIUS)
+        elif self.circles[-1][1] == 0 and first_gap(self.circles, self.bud_radius/self.BASE_RADIUS):
+            self.current_angle, self.current_height = first_gap(self.circles, self.bud_radius/self.BASE_RADIUS)
 
-        self._front.append((self.current_angle, self.current_height, self.bud_radius/self.BASE_RADIUS))
-        return self.current_angle, self.current_height, self.BASE_RADIUS, self.bud_radius
+        # if the first layer has been filled as much as possible, make the second layer by inserting buds in the holes
+        # between the buds on the first layer
+        elif current_front is None:
+            self.current_angle, self.current_height = self.lowest_on_front(
+                sorted(self.circles, key=lambda c: c[0], reverse=True))
+        # the new bud is a normal one, after the second layer of buds - proceed to the normal
+        # first empty space algorithm, assuming that there are no gaps and using fronts
+        else:
+            self.current_angle, self.current_height = self.lowest_on_front(current_front)
+
+        self.circles.append((self.current_angle, self.current_height, self.bud_radius/self.BASE_RADIUS))
+        return self.current_angle, self.current_height * self.BASE_RADIUS, self.BASE_RADIUS, self.bud_radius

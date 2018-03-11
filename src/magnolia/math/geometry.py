@@ -2,6 +2,15 @@ import math
 from typing import List, Tuple, Iterable
 
 
+class FrontError(ValueError):
+    """Raised when a valid front can't be constructed."""
+
+
+def approx_equal(a: float, b: float, diff=0.001) -> bool:
+    """Check whether the 2 values are appropriately equal."""
+    return abs(a - b) < diff
+
+
 def norm_angle(angle):
     """Normalize the given angle (wrapping around π)."""
     return ((angle + math.pi) % (2 * math.pi) - math.pi)
@@ -112,7 +121,8 @@ def flat_circle_overlap(
     return norm_angle(x3), max(y1 + y3, y1 - y3)
 
 
-def closest_bud(b1: Tuple[float, float, float], b2: Tuple[float, float, float], radius: float) -> Tuple[float, float]:
+def closest_circle(
+        b1: Tuple[float, float, float], b2: Tuple[float, float, float], radius: float) -> Tuple[float, float]:
     """
     Return the angle and height of a bud with the given radius as close a possible to the given buds.
 
@@ -128,19 +138,20 @@ def closest_bud(b1: Tuple[float, float, float], b2: Tuple[float, float, float], 
     This can be reduced to the intersection of 2 circles at b1 and b2, with radiuses of
     b1,radius + radius and b2.radius + radius
     """
-    n_b1 = b1[2] + radius
-    n_b2 = b2[2] + radius
-    b1_b2 = b1[2] + b2[2]
-
     x1, y1, r1 = b1
     x2, y2, r2 = b2
 
-    # check that the given circles are actually touching
-    if n_b1 + n_b2 < cylin_distance(b1, b2):
-        return norm_angle((b1[0] + b2[0]) / 2), (b1[1] + b2[1]) / 2
+    n_b1 = r1 + radius
+    n_b2 = r2 + radius
+
+    # the dist between the 2 buds should be r1 + r2, but do it manually just in case
+    b1_b2 = cylin_distance(b1, b2)
 
     a = (n_b1**2 - n_b2**2 + b1_b2**2) / (2 * b1_b2)
-    h = math.sqrt(n_b1**2 - a**2)
+    if approx_equal(n_b1, a, 0.01):
+        h = 0
+    else:
+        h = math.sqrt(n_b1**2 - a**2)
 
     midx = x1 + a * (x2 - x1)/b1_b2
     midy = y1 + a * (y2 - y1)/b1_b2
@@ -154,3 +165,42 @@ def closest_bud(b1: Tuple[float, float, float], b2: Tuple[float, float, float], 
     if y3_1 > y3_2:
         return norm_angle(x3_1), y3_1
     return norm_angle(x3_2), y3_2
+
+
+def highest_left(circles, checked: Tuple[float, float, float]) -> Tuple[float, float, float]:
+    for c in circles:
+        if c != checked and cylin_distance(c, checked) < (c[2] + c[2]) * 1.2 and norm_angle(c[0] - checked[0]) > 0:
+            return c
+    raise FrontError
+
+
+def front(circles: List[Tuple[float, float, float]]) -> List[Tuple[float, float, float]]:
+    """
+    Given a list of circles, return their current front.
+
+    From https://doi.org/10.5586/asbp.3533: "a front is a zigzagging ring of
+    primordia encircling the cylinder, each primordium being tangent to one on its left and
+    one on its right. Moreover, any primordium above the front must be higher than any
+    primordium of the front."
+
+    :param list circles: the collection of circles to be checked
+    :returns: the front
+    """
+    if not circles:
+        return []
+
+    # sort the circles by height
+    circles = sorted(circles, key=lambda c: c[1], reverse=True)
+
+    highest = circles[0]
+
+    def left(checked):
+        c = highest_left(circles, checked)
+        if c and c != highest:
+            return [checked] + left(c)
+        return [checked]
+
+    try:
+        return left(highest)
+    except FrontError:
+        return None

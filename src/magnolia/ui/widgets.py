@@ -189,7 +189,7 @@ class LowestAvailableSegment(Segment):
         self.controls.addItem(spacerItem)
 
         self.controls.addWidget(self.make_label('buds_to_add_label', 'buds to add:'))
-        self.to_add_input = self.text_line('buds_to_add', 4)
+        self.to_add_input = self.text_line('buds_to_add', 6)
         self.controls.addWidget(self.to_add_input)
 
         self.controls.addWidget(self.make_label('size_label', 'bud size (as fraction of R):'))
