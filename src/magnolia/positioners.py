@@ -1,4 +1,6 @@
 import math
+import random
+
 from magnolia.meristem import Bud
 from magnolia.graph import BudGraph
 from magnolia.math.geometry import closest_circle, first_gap, front, check_collisions, cycle_ring
@@ -235,9 +237,11 @@ class ChangingRingPositioner(RingPositioner):
 
 class LowestAvailablePositioner(Positioner):
 
-    def __init__(self, start_size, front=None, **kwargs):
+    def __init__(self, start_size, front=None, delta=0, random=0, **kwargs):
         self.start_size = start_size
         self.circles = front or []
+        self.random = random
+        self.delta = delta
         super().__init__(size=self.BASE_RADIUS/start_size, **kwargs)
 
     def reset(self):
@@ -245,9 +249,19 @@ class LowestAvailablePositioner(Positioner):
         super().reset()
         self.circles = []
 
-    def lowest_on_front(self, checked_front):
+    def next_radius(self):
+        """Work out what the radius of the next bud should be and return it."""
+        base = self.bud_radius
+        base -= self.delta * base
+        if self.random:
+            base += random.randint(-self.random, self.random) / 100.0
+
+        self.bud_radius = base
+        return base / self.BASE_RADIUS
+
+    def lowest_on_front(self, checked_front, radius):
         potentials = filter(None, [
-            closest_circle(prev, checked, self.bud_radius/self.BASE_RADIUS)
+            closest_circle(prev, checked, radius)
             for checked, prev in zip(
                     checked_front + checked_front + checked_front,
                     cycle_ring(checked_front, 1) + cycle_ring(checked_front, 2) + cycle_ring(checked_front, 3)
@@ -276,7 +290,7 @@ class LowestAvailablePositioner(Positioner):
         :returns: a tuple with the (angle, height, radius, scale) of the next bud
         """
         current_front = front(self.circles)
-        radius = self.bud_radius/self.BASE_RADIUS
+        radius = self.next_radius()
 
         # first check if this is the first or second bud - if so, just insert them
         if len(self.circles) < 2:
@@ -291,11 +305,11 @@ class LowestAvailablePositioner(Positioner):
         # between the buds on the first layer
         elif current_front is None:
             self.current_angle, self.current_height, radius = self.lowest_on_front(
-                sorted(self.circles, key=lambda c: c[0]))
+                sorted(self.circles, key=lambda c: c[0]), radius)
         # the new bud is a normal one, after the second layer of buds - proceed to the normal
         # first empty space algorithm, assuming that there are no gaps and using fronts
         else:
-            self.current_angle, self.current_height, radius = self.lowest_on_front(current_front)
+            self.current_angle, self.current_height, radius = self.lowest_on_front(current_front, radius)
 
         self.circles.append((self.current_angle, self.current_height, radius))
         return self.current_angle, self.current_height * self.BASE_RADIUS, self.BASE_RADIUS, self.bud_radius

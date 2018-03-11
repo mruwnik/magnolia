@@ -205,3 +205,37 @@ class LowestAvailableSegment(Segment):
             start_angle=start_angle,
             start_height=start_height,
         )
+
+
+class VariableLowestAvailableSegment(LowestAvailableSegment):
+
+    name = 'Variable lowest available space positioner'
+
+    def init_controls(self):
+        """Add all controls needed for a given meristem to be set up."""
+        super().init_controls()
+
+        self.controls2 = QHBoxLayout()
+        self.controls2.setObjectName('controls2')
+        spacerItem = QSpacerItem(20, 0, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.controls2.addItem(spacerItem)
+
+        self.controls2.addWidget(self.make_label('random_variation', 'random (%):'))
+        self.random = self.text_line('set_random', 0, 35)
+        self.controls2.addWidget(self.random)
+
+        self.controls2.addWidget(self.make_label('delta', 'decrease by (%):'))
+        self.delta = self.text_line('set_delta', 1)
+        self.controls2.addWidget(self.delta)
+
+        self.main_box.addLayout(self.controls2)
+
+    def positioner(self, start_angle, start_height):
+        """Get a positioner for the current settings."""
+        return self.positioner_class(
+            random=int(round(float(self.random.text() or 0))),
+            delta=float(self.delta.text() or 0)/100,
+            start_size=float(self.bud_size.text() or 0),
+            start_angle=start_angle,
+            start_height=start_height,
+        )

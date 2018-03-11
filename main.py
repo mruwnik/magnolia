@@ -2,7 +2,9 @@ from qtpy.QtCore import QTimer
 from qtpy.QtWidgets import QApplication, QMainWindow
 
 from magnolia.ui import Ui_MainWindow, signaler, positioners, LineDrawable
-from magnolia.positioners import RingPositioner, ChangingRingPositioner
+from magnolia.positioners import (
+    RingPositioner, ChangingRingPositioner, LowestAvailablePositioner
+)
 from magnolia.graph import BudGraph
 
 
@@ -42,6 +44,8 @@ class Prog(QMainWindow):
         positioner_classes = {
             'Ring positioner': RingPositioner,
             'Decreasing ring positioner': ChangingRingPositioner,
+            'Lowest available space positioner': LowestAvailablePositioner,
+            'Variable lowest available space positioner': LowestAvailablePositioner,
         }
         segment = positioners[pos_name](
             positioner_classes[pos_name],
