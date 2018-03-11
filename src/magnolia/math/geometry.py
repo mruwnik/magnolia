@@ -98,14 +98,12 @@ def first_gap(circles: List[Tuple[float, float, float]], radius: float) -> Tuple
     2 circles is larger than 2*radius it deems that it's found a hole and returns the (x,y) that lies
     between the 2 circles.
     """
-    circles = sorted(circles, key=lambda x: x[0])
-    prev_x, _, prev_rad = circles[0]
+    circles = sorted(circles, key=lambda x: x[0], reverse=True)
 
-    for current_x, __, current_rad in circles[1:] + [circles[0]]:
-        dist = abs(norm_angle(prev_x + current_x))
-        if prev_rad + current_rad + 2*radius < dist:
-            return norm_angle(prev_x + dist/2), 0
-        prev_x, prev_rad = current_x, current_rad
+    for c1, c2 in zip(circles, circles[1:] + [circles[0]]):
+        dist = abs(norm_angle(c1[0] - c2[0]))
+        if c1[2] + c2[2] + 2*radius < dist:
+            return norm_angle(c1[0] - dist/2), 0
 
 
 def flat_circle_overlap(
@@ -123,7 +121,7 @@ def flat_circle_overlap(
 
 def are_intersecting(c1: Tuple, c2: Tuple) -> bool:
     """Check whether the 2 provided circles intersect,"""
-    return cylin_distance(c1, c2) < c1[2] + c2[2]
+    return cylin_distance(c1, c2) < c1[2] + c2[2] - 0.0000001
 
 
 def check_collisions(circle: Tuple[float, float, float], to_check: List[Tuple]) -> bool:
@@ -157,8 +155,12 @@ def closest_circle(
     # the dist between the 2 buds should be r1 + r2, but do it manually just in case
     b1_b2 = cylin_distance(b1, b2)
 
+    # check if the circles are in the same place
+    if approx_equal(b1_b2, 0):
+        return None
+
     a = (n_b1**2 - n_b2**2 + b1_b2**2) / (2 * b1_b2)
-    if approx_equal(n_b1, a, 0.01):
+    if n_b1 < abs(a):
         h = 0
     else:
         h = math.sqrt(n_b1**2 - a**2)
@@ -179,9 +181,14 @@ def closest_circle(
 
 def highest_left(circles, checked: Tuple[float, float, float]) -> Tuple[float, float, float]:
     for c in circles:
-        if c != checked and cylin_distance(c, checked) < (c[2] + c[2]) * 1.2 and norm_angle(c[0] - checked[0]) > 0:
+        if norm_angle(c[0] - checked[0]) > 0:
             return c
     raise FrontError
+
+
+def touching(circle: Tuple[float, float, float], circles: Iterable[Tuple]) -> List[Tuple]:
+    """Return all circles that are touching the provided one."""
+    return [c for c in circles if cylin_distance(c, circle) < c[2] + circle[2] + 0.1 and c != circle]
 
 
 def front(circles: List[Tuple[float, float, float]]) -> List[Tuple[float, float, float]]:
@@ -205,7 +212,9 @@ def front(circles: List[Tuple[float, float, float]]) -> List[Tuple[float, float,
     highest = circles[0]
 
     def left(checked):
-        c = highest_left(circles, checked)
+        neighbours = touching(checked, circles)
+        c = highest_left(neighbours, checked)
+
         if c and c != highest:
             return [checked] + left(c)
         return [checked]
