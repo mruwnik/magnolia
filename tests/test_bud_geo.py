@@ -1,70 +1,11 @@
 import math
 import pytest
 
-from magnolia.graph import (
-    linear_function, perendicular_plane_checker, length, line_distance_check, dot_product, cross_product,
-    vect_diff, vect_mul, in_cone_checker, middle_point
+from magnolia.math.geometry import in_cone_checker
+from magnolia.math.bud_geo import (
+    linear_function, line_distance_check, perendicular_plane_checker, middle_point
 )
 from magnolia.meristem import Bud
-
-
-@pytest.mark.parametrize('v1, v2, dot', (
-    ([1, 3, -5], [4, -2, -1], 3),
-    ([1, 2, 3], [1, 5, 7], 32),
-    ([0, 0, 0, 0, 0], [1, 1, 1], 0),
-    ([1] * 23, [1, 1, 1], 3),
-))
-def test_dot_product(v1, v2, dot):
-    """Check whether dot products are correctly calculated."""
-    assert dot_product(v1, v2) == pytest.approx(dot)
-
-
-@pytest.mark.parametrize('v1, v2, cross', (
-    ((2, 3, 4), (5, 6, 7), (-3, 6, -3)),
-    ((1, 2, 3), (1, 5, 7), (-1, -4, 3)),
-    ((-1, -2, 3), (4, 0, -8), (16, 4, 8)),
-))
-def test_cross_product(v1, v2, cross):
-    """Test whether cross products are correctly calculated."""
-    a, b, c = cross_product(v1, v2)
-    assert cross[0] == pytest.approx(a)
-    assert cross[1] == pytest.approx(b)
-    assert cross[2] == pytest.approx(c)
-
-
-@pytest.mark.parametrize('v1, v2, out', (
-    ((1, 1, 1), (1, 1, 1), [0, 0, 0]),
-    ((2, 1, -1), (1, 1, 1), [1, 0, -2]),
-    ((2, 1, -1, 1233), (1, 1, 1), [1, 0, -2]),
-))
-def test_vect_diff(v1, v2, out):
-    """Check whether subtracting vectors works."""
-    assert vect_diff(v1, v2) == out
-
-
-@pytest.mark.parametrize('v1, scalar, out', (
-    ((1, 1, 1), 2, [2, 2, 2]),
-    ((2, 1, -1), 3, [6, 3, -3]),
-    ((2, 1, -1, 2, 3.1), 3, [6, 3, -3, 6, 9.3]),
-    ((2, 1, -1), 0, [0, 0, 0]),
-))
-def test_vect_mul(v1, scalar, out):
-    """Check whether multiplying a vector by a scalar works."""
-    assert vect_mul(v1, scalar) == out
-
-
-@pytest.mark.parametrize('vector, leng', (
-    ((1,), 1),
-    ((1, 1), math.sqrt(2)),
-    ((5, 3), math.sqrt(25 + 9)),
-    ((4, 3), 5),
-    ((1, 1, 1), 1.73205),
-    ((2, 1, 2), 3),
-    ((2, -14, 5), 15),
-))
-def test_length(vector, leng):
-    """Check whether calculating vector lengths works."""
-    assert length(vector) == pytest.approx(leng)
 
 
 def make_bud(angle=0.123, height=1, radius=3, scale=1):

@@ -121,6 +121,16 @@ def flat_circle_overlap(
     return norm_angle(x3), max(y1 + y3, y1 - y3)
 
 
+def are_intersecting(c1: Tuple, c2: Tuple) -> bool:
+    """Check whether the 2 provided circles intersect,"""
+    return cylin_distance(c1, c2) < c1[2] + c2[2]
+
+
+def check_collisions(circle: Tuple[float, float, float], to_check: List[Tuple]) -> bool:
+    """Check whether the given circle overlaps with any in the provided list."""
+    return any(are_intersecting(circle, c) for c in to_check)
+
+
 def closest_circle(
         b1: Tuple[float, float, float], b2: Tuple[float, float, float], radius: float) -> Tuple[float, float]:
     """
@@ -153,18 +163,18 @@ def closest_circle(
     else:
         h = math.sqrt(n_b1**2 - a**2)
 
-    midx = x1 + a * (x2 - x1)/b1_b2
+    midx = x1 + a * norm_angle(x2 - x1)/b1_b2
     midy = y1 + a * (y2 - y1)/b1_b2
 
     x3_1 = midx + h*(y2 - y1)/b1_b2
-    y3_1 = midy - h*(x2 - x1)/b1_b2
+    y3_1 = midy - h*norm_angle(x2 - x1)/b1_b2
 
     x3_2 = midx - h*(y2 - y1)/b1_b2
-    y3_2 = midy + h*(x2 - x1)/b1_b2
+    y3_2 = midy + h*norm_angle(x2 - x1)/b1_b2
 
     if y3_1 > y3_2:
-        return norm_angle(x3_1), y3_1
-    return norm_angle(x3_2), y3_2
+        return norm_angle(x3_1), y3_1, radius
+    return norm_angle(x3_2), y3_2, radius
 
 
 def highest_left(circles, checked: Tuple[float, float, float]) -> Tuple[float, float, float]:
@@ -204,3 +214,22 @@ def front(circles: List[Tuple[float, float, float]]) -> List[Tuple[float, float,
         return left(highest)
     except FrontError:
         return None
+
+
+def cycle_ring(ring: List[Tuple], n: int) -> List[Tuple]:
+    """
+    Rotate the given ring of circles by n circles.
+
+    This function assumes that the ring is sorted by angle.
+    """
+    if n > 1:
+        ring = cycle_ring(ring, n - 1)
+
+    lastx, lasty, lastr = ring[-1]
+    first = ring[0]
+
+    if abs(lastx - first[0]) > math.pi:
+        first = [lastx - 2 * math.pi, lasty, lastr]
+    else:
+        first = [lastx, lasty, lastr]
+    return [first] + ring[:-1]
