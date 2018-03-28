@@ -252,9 +252,12 @@ class LowestAvailablePositioner(Positioner):
     def next_radius(self):
         """Work out what the radius of the next bud should be and return it."""
         base = self.bud_radius
-        base -= self.delta * base
+
+        scale = self.delta
         if self.random:
-            base += random.randint(-self.random, self.random) / 100.0
+            scale += scale * random.randint(-self.random, self.random) / 100.0
+
+        base -= scale * base
 
         self.bud_radius = base
         return base / self.BASE_RADIUS
@@ -268,10 +271,11 @@ class LowestAvailablePositioner(Positioner):
             )
         ])
         # filter out all potentials that overlap with existing buds. Don't just check the front, coz the potentials
-        # might lie lower than it
+        # might lie lower than it. It should suffice to only check the last n buds, where n is twice the size of
+        # the current front. Any lower buds will most likely be covered by the current front.
         potentials = [
             potential for potential in potentials
-            if not check_collisions(potential, self.circles[-len(checked_front):])
+            if not check_collisions(potential, self.circles[-len(checked_front) * 2:])
         ]
         if not potentials:
             return None
