@@ -83,6 +83,11 @@ class Positioner(BudGraph):
             item.scale = scale
         self._vertices = self.concat('vertices', self.displayables)
 
+    @property
+    def current_front(self):
+        """Get the current front (the buds consisting the highest layer)."""
+        return tuple()
+
 
 class AnglePositioner(Positioner):
 
@@ -168,10 +173,12 @@ class RingPositioner(Positioner):
         if self._height:
             return self._height
 
+        # basic Pythagoras - lat is the lateral distance between 2 layers
         lat = abs(self.angle % self.angle_step)
         if lat > self.angle_step / 2:
             lat = self.angle_step - lat
-        lat *= self.BASE_RADIUS
+        # scale up lat proportionally to the ring radius
+        lat *= self.ring_radius
         return math.sqrt(abs(4*self.bud_radius**2 - lat**2))
 
     @property
@@ -242,7 +249,8 @@ class LowestAvailablePositioner(Positioner):
         self.circles = front or []
         self.random = random
         self.delta = delta
-        super().__init__(size=self.BASE_RADIUS/start_size, **kwargs)
+        start_height = kwargs.pop('start_height', 0.0) / self.BASE_RADIUS
+        super().__init__(size=self.BASE_RADIUS/start_size, start_height=start_height, **kwargs)
 
     def reset(self):
         """Reset the positioner."""
@@ -283,6 +291,11 @@ class LowestAvailablePositioner(Positioner):
             return potentials[0]
         return min(*potentials, key=lambda c: c[1])
 
+    @property
+    def current_front(self):
+        """Get the current bud front (check the `front()` function for details)."""
+        return front(self.circles)
+
     def _next_pos(self):
         """
         Get the position of the next item.
@@ -293,7 +306,7 @@ class LowestAvailablePositioner(Positioner):
         :rtype: tuple
         :returns: a tuple with the (angle, height, radius, scale) of the next bud
         """
-        current_front = front(self.circles)
+        current_front = self.current_front
         radius = self.next_radius()
 
         # first check if this is the first or second bud - if so, just insert them
@@ -316,4 +329,10 @@ class LowestAvailablePositioner(Positioner):
             self.current_angle, self.current_height, radius = self.lowest_on_front(current_front, radius)
 
         self.circles.append((self.current_angle, self.current_height, radius))
-        return self.current_angle, self.current_height * self.BASE_RADIUS, self.BASE_RADIUS, self.bud_radius
+
+        # the angle will always be between 0 and 2π, but the height will depend on the radius if the bud is to be
+        # circular. This positioner uses normal coords (all buds are assumed to have a scale of 1), so the height
+        # has to be scaled before it can be returned
+        height = self.current_height * self.BASE_RADIUS
+
+        return self.current_angle, height, self.BASE_RADIUS, self.bud_radius

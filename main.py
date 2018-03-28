@@ -69,12 +69,14 @@ class Prog(QMainWindow):
         """Reposition all buds according to the current settings."""
         buds = self.meristem.next_or_new()
         angle, height, radius, scale = 0, 0, 0, 0
+        current_front = []
 
         for pos_setter in self.used_positioners:
-            positioner = pos_setter.positioner(angle, height)
+            positioner = pos_setter.positioner(angle, height, front=current_front)
             for angle, height, radius, scale in positioner.n_positions(pos_setter.to_add):
                 next(buds).update_pos(angle, height, radius, scale)
             angle, height, radius, scale = positioner._next_pos()
+            current_front = positioner.current_front
 
         self.meristem.truncate(sum(p.to_add for p in self.used_positioners))
         signaler.refresh_needed.emit()

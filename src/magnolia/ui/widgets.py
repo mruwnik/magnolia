@@ -127,7 +127,7 @@ class RingSegment(Segment):
 
         self.main_box.addLayout(self.controls)
 
-    def positioner(self, start_angle, start_height):
+    def positioner(self, start_angle, start_height, front):
         """Get a positioner for the current settings."""
         return self.positioner_class(
             math.radians(float(self.angle.text() or 0)),
@@ -165,7 +165,7 @@ class DecreasingRingSegment(RingSegment):
 
         self.main_box.addLayout(self.controls2)
 
-    def positioner(self, start_angle, start_height):
+    def positioner(self, start_angle, start_height, front):
         """Get a positioner for the current settings."""
         return self.positioner_class(
             math.radians(float(self.angle.text() or 0)),
@@ -198,12 +198,13 @@ class LowestAvailableSegment(Segment):
 
         self.main_box.addLayout(self.controls)
 
-    def positioner(self, start_angle, start_height):
+    def positioner(self, start_angle, start_height, front):
         """Get a positioner for the current settings."""
         return self.positioner_class(
             start_size=float(self.bud_size.text() or 0),
             start_angle=start_angle,
             start_height=start_height,
+            front=front,
         )
 
 
@@ -230,7 +231,7 @@ class VariableLowestAvailableSegment(LowestAvailableSegment):
 
         self.main_box.addLayout(self.controls2)
 
-    def positioner(self, start_angle, start_height):
+    def positioner(self, start_angle, start_height, front):
         """Get a positioner for the current settings."""
         return self.positioner_class(
             random=int(round(float(self.random.text() or 0))),
@@ -238,4 +239,5 @@ class VariableLowestAvailableSegment(LowestAvailableSegment):
             start_size=float(self.bud_size.text() or 0),
             start_angle=start_angle,
             start_height=start_height,
+            front=front,
         )
