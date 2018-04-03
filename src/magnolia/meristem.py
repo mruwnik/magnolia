@@ -1,6 +1,8 @@
 import array
 import math
 from itertools import count
+from contextlib import contextmanager
+from typing import List
 
 from PyQt5.QtGui import QVector3D
 
@@ -42,6 +44,7 @@ class Bud(Sphere, MeshDrawable):
     WHITE = (1, 1, 1)
     COLOURS = {}
     """A buffer of colour arrays to speed things up (rather than recreate one for each colour change)."""
+    ids_generator = count()
 
     def __init__(self, *args, **kwargs):
         """Initialse this bud, positioning it appropriately upon the meristem.
@@ -51,7 +54,6 @@ class Bud(Sphere, MeshDrawable):
         :param float height: this buds height upon the meristem
         :param MeshData mesh: the mesh used for displaying. The default is a simple sphere
         """
-        self.ids_generator = count()
         self.bud_id = next(self.ids_generator)
 
         kwargs['colours'] = kwargs.pop('fill_colour', self.BLUE)
@@ -111,6 +113,9 @@ class Bud(Sphere, MeshDrawable):
         else:
             return t1
 
+    def __hash__(self):
+        return self.bud_id
+
 
 class Meristem(MultiDrawable):
     def add_bud(self, **kwargs):
@@ -124,6 +129,21 @@ class Meristem(MultiDrawable):
         """
         buds = sorted(self.objects, key=lambda b: bud.distance(b))
         return buds[1:]
+
+    def move_bud(self, bud: Bud, to: Sphere, front: List[Sphere]):
+        """Move the given bud to the position at the given sphere."""
+        bud.update_pos(to.angle, to.height, to.radius, to.scale)
+
+    @contextmanager
+    def buds_mover(self):
+        """Get a context manager that will get or create buds that can then be positioned."""
+        buds = self.next_or_new()
+
+        def mover(pos, front):
+            bud = next(buds)
+            self.move_bud(bud, pos, front)
+
+        yield mover
 
     def next_or_new(self):
         """

@@ -78,6 +78,19 @@ class Sphere(object):
             return math.sqrt(dist)
         return -1
 
+    def __repr__(self):
+        return '<Sphere (angle=%s, height=%s, radius=%s, scale=%s)' % (self.angle, self.height, self.radius, self.scale)
+
+
+def by_height(circles: List[Sphere], reversed=True):
+    """Return the given circles sorted by height."""
+    return sorted(circles, key=lambda c: c.height, reverse=reversed)
+
+
+def by_angle(circles: List[Sphere], reversed=True):
+    """Return the given circles sorted by angle."""
+    return sorted(circles, key=lambda c: c.angle, reverse=reversed)
+
 
 def approx_equal(a: float, b: float, diff=0.001) -> bool:
     """Check whether the 2 values are appropriately equal."""
@@ -171,7 +184,7 @@ def first_gap(circles: List[Sphere], radius: float) -> Tuple[float, float]:
     2 circles is larger than 2*radius it deems that it's found a hole and returns the (x,y) that lies
     between the 2 circles.
     """
-    circles = sorted(circles, key=lambda c: c.angle, reverse=True)
+    circles = by_angle(circles)
 
     for c1, c2 in zip(circles, circles[1:] + [circles[0]]):
         dist = abs(norm_angle(c1.angle - c2.angle))
@@ -258,9 +271,9 @@ def highest_left(circles: List[Sphere], checked: Sphere) -> Sphere:
     raise FrontError
 
 
-def touching(circle: Sphere, circles: Iterable[Sphere]) -> List[Sphere]:
+def touching(circle: Sphere, circles: Iterable[Sphere], precision: float=0.1) -> List[Sphere]:
     """Return all circles that are touching the provided one."""
-    return [c for c in circles if circle.distance(c) < c.scale + circle.scale + 0.1 and c != circle]
+    return [c for c in circles if circle.distance(c) < c.scale + circle.scale + precision and c != circle]
 
 
 def front(circles: List[Sphere]) -> List[Sphere]:
@@ -279,15 +292,18 @@ def front(circles: List[Sphere]) -> List[Sphere]:
         return []
 
     # sort the circles by height
-    circles = sorted(circles, key=lambda c: c.height, reverse=True)
-
+    circles = by_height(circles)
     highest = circles[0]
+    seen = set()
 
     def left(checked):
         neighbours = touching(checked, circles)
         c = highest_left(neighbours, checked)
 
-        if c and c != highest:
+        if c and c != highest and c not in seen:
+            # sometimes a proper front can't be constructed coz a bud has no left neighbours
+            # so to stop infinite recursions, stop when a bud is found more than once
+            seen.add(c)
             return [checked] + left(c)
         return [checked]
 

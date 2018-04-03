@@ -5,7 +5,8 @@ from magnolia.ui import Ui_MainWindow, signaler, positioners, LineDrawable
 from magnolia.positioners import (
     RingPositioner, ChangingRingPositioner, LowestAvailablePositioner
 )
-from magnolia.graph import BudGraph
+from magnolia.front import BudFronter
+from magnolia.math.geometry import Sphere
 
 
 class Prog(QMainWindow):
@@ -20,7 +21,7 @@ class Prog(QMainWindow):
 
         self.connect_views()
         # Make a dummy meristem with random buds in different colours
-        self.meristem = BudGraph()
+        self.meristem = BudFronter()
 
         # set the OpenGL canvas up with the meristem
         self.ui.mainCanvas.objects = self.meristem
@@ -67,16 +68,14 @@ class Prog(QMainWindow):
 
     def redraw(self):
         """Reposition all buds according to the current settings."""
-        buds = self.meristem.next_or_new()
-        angle, height, radius, scale = 0, 0, 0, 0
+        pos = Sphere(0, 0)
         current_front = []
 
-        for pos_setter in self.used_positioners:
-            positioner = pos_setter.positioner(angle, height, front=current_front)
-            for angle, height, radius, scale in positioner.n_positions(pos_setter.to_add):
-                next(buds).update_pos(angle, height, radius, scale)
-            angle, height, radius, scale = positioner._next_pos()
-            current_front = positioner.current_front
+        with self.meristem.buds_mover() as mover:
+            for pos_setter in self.used_positioners:
+                positioner = pos_setter.positioner(pos.angle, pos.height, front=current_front)
+                for pos, current_front in positioner.n_positions(pos_setter.to_add):
+                    mover(pos, current_front)
 
         self.meristem.truncate(sum(p.to_add for p in self.used_positioners))
         signaler.refresh_needed.emit()
@@ -110,6 +109,9 @@ class Prog(QMainWindow):
         else:
             lines = []
         self.ui.mainCanvas._lines = self.ui.flatStem._lines = lines
+
+        # print front data of selected
+        self.meristem.print_front_info(bud)
 
         bud.colours = bud.GREEN
         self.meristem.refresh_field('colours')

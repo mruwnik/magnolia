@@ -1,5 +1,6 @@
 import math
 import random
+from typing import Tuple, List
 
 from magnolia.meristem import Bud
 from magnolia.graph import BudGraph
@@ -29,7 +30,7 @@ class Positioner(BudGraph):
             fill_colour=self.colour,
         )
 
-    def _next_pos(self):
+    def _next_pos(self) -> Tuple[Sphere, List[Sphere]]:
         """
         Get the position of the next item.
 
@@ -37,9 +38,9 @@ class Positioner(BudGraph):
         on the current state of the meristem.
 
         :rtype: tuple
-        :returns: a tuple with the (angle, height, radius, scale) of the next bud
+        :returns: a tuple with the (position, front) of the next bud
         """
-        return 0, 1, self.bud_radius, 1
+        return Sphere(0, 1, self.bud_radius, 1), None
 
     def n_positions(self, n):
         """Yield the positions of the next n buds."""
@@ -135,7 +136,7 @@ class AnglePositioner(Positioner):
 
         self._current_row = 0
 
-    def _next_pos(self):
+    def _next_pos(self) -> Tuple[Sphere, List[Sphere]]:
         """Calculate the position of the next bud."""
         self.current_angle += self.lat_step
 
@@ -144,7 +145,7 @@ class AnglePositioner(Positioner):
             self.current_angle = (self._current_row * self.angle_step) % self.lat_step
             self.current_height += self.ver_step
 
-        return self.current_angle, self.current_height, self.BASE_RADIUS, self.bud_radius
+        return Sphere(self.current_angle, self.current_height, self.BASE_RADIUS, self.bud_radius), None
 
 
 class RingPositioner(Positioner):
@@ -198,7 +199,7 @@ class RingPositioner(Positioner):
         self.current_angle = Bud.norm_angle(self.angle * self.current_ring + self.start_angle)
         self.current_height += self.ring_height
 
-    def _next_pos(self):
+    def _next_pos(self) -> Tuple[Sphere, List[Sphere]]:
         """Return the parameters of the next bud to be positioned."""
         if self.current_ring_place < self.buds_per_ring:
             self.current_angle -= self.angle_step
@@ -206,7 +207,7 @@ class RingPositioner(Positioner):
         else:
             self._next_ring()
 
-        return self.current_angle, self.current_height, self.ring_radius, self.bud_radius
+        return Sphere(self.current_angle, self.current_height, self.ring_radius, self.bud_radius), None
 
 
 class ChangingRingPositioner(RingPositioner):
@@ -296,7 +297,7 @@ class LowestAvailablePositioner(Positioner):
         """Get the current bud front (check the `front()` function for details)."""
         return front(self.circles)
 
-    def _next_pos(self):
+    def _next_pos(self) -> Tuple[Sphere, List[Sphere]]:
         """
         Get the position of the next item.
 
@@ -335,4 +336,4 @@ class LowestAvailablePositioner(Positioner):
         # has to be scaled before it can be returned
         height = self.current_height * self.BASE_RADIUS
 
-        return self.current_angle, height, self.BASE_RADIUS, self.bud_radius
+        return Sphere(self.current_angle, height, self.BASE_RADIUS, self.bud_radius), current_front

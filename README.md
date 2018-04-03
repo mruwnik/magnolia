@@ -97,3 +97,4 @@ A single bud. Currently it's just a coloured sphere. The sphere mesh is read in 
 # FIXES
 
  * Don't recalculate whole meristems when just adding a few points
+ * allow large buds (i.e. scale = 1)

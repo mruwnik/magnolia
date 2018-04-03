@@ -65,9 +65,8 @@ class BudGraph(Meristem):
         # neighbours of each of its neighbours. This will fail if the new node is between
         # 2 other nodes. In that case both of them won't see each other, but will see the
         # new node, so everything should be ok
-        # skip the check for now, as it's really slow
-        #        for neighbour in neighbours:
-        #            self.nodes[neighbour] = get_reachable(neighbour, self.closest(neighbour))
+        for neighbour in neighbours:
+            self.nodes[neighbour] = get_reachable(neighbour, self.closest(neighbour))
 
     def neighbours(self, bud: Bud) -> List[Bud]:
         """Get a list of all buds that can be reached by the provided bud."""
