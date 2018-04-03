@@ -3,7 +3,7 @@ import random
 
 from magnolia.meristem import Bud
 from magnolia.graph import BudGraph
-from magnolia.math.geometry import closest_circle, first_gap, front, check_collisions, cycle_ring
+from magnolia.math.geometry import closest_circle, first_gap, front, check_collisions, cycle_ring, Sphere
 
 
 class Positioner(BudGraph):
@@ -289,7 +289,7 @@ class LowestAvailablePositioner(Positioner):
             return None
         elif len(potentials) == 1:
             return potentials[0]
-        return min(*potentials, key=lambda c: c[1])
+        return min(*potentials, key=lambda c: c.height)
 
     @property
     def current_front(self):
@@ -311,24 +311,24 @@ class LowestAvailablePositioner(Positioner):
 
         # first check if this is the first or second bud - if so, just insert them
         if len(self.circles) < 2:
-            self.current_angle = Bud.norm_angle(self.current_angle + math.pi)
+            lowest = Sphere(
+                Bud.norm_angle(self.current_angle + math.pi), self.current_height, scale=radius)
 
         # if the newest bud is on ground level then stick the bud in the first hole on ground level. This split
         # is to allow the next function to always assume that it gets touching buds. This makes things a lot easier.
-        elif self.circles[-1][1] == 0 and first_gap(self.circles, radius):
-            self.current_angle, self.current_height = first_gap(self.circles, radius)
+        elif self.circles[-1].height == 0 and first_gap(self.circles, radius):
+            lowest = Sphere(*first_gap(self.circles, radius), scale=radius)
 
         # if the first layer has been filled as much as possible, make the second layer by inserting buds in the holes
         # between the buds on the first layer
         elif current_front is None:
-            self.current_angle, self.current_height, radius = self.lowest_on_front(
-                sorted(self.circles, key=lambda c: c[0]), radius)
+            lowest = self.lowest_on_front(sorted(self.circles, key=lambda c: c.angle), radius)
         # the new bud is a normal one, after the second layer of buds - proceed to the normal
         # first empty space algorithm, assuming that there are no gaps and using fronts
         else:
-            self.current_angle, self.current_height, radius = self.lowest_on_front(current_front, radius)
-
-        self.circles.append((self.current_angle, self.current_height, radius))
+            lowest = self.lowest_on_front(current_front, radius)
+        self.current_angle, self.current_height = lowest.angle, lowest.height
+        self.circles.append(lowest)
 
         # the angle will always be between 0 and 2π, but the height will depend on the radius if the bud is to be
         # circular. This positioner uses normal coords (all buds are assumed to have a scale of 1), so the height

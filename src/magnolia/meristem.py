@@ -4,7 +4,7 @@ from itertools import count
 
 from PyQt5.QtGui import QVector3D
 
-from magnolia.math.geometry import norm_angle
+from magnolia.math.geometry import Sphere
 from magnolia.ui import MultiDrawable, MeshDrawable, OBJReader
 
 
@@ -31,7 +31,7 @@ def solve_quadratic(a, b, c):
     return (x0, x1) if x0 > x1 else (x1, x0)
 
 
-class Bud(MeshDrawable):
+class Bud(Sphere, MeshDrawable):
     SPHERE_MODEL = OBJReader('sphere.obj').objects['sphere']
     VERTICE_COUNT = int(len(SPHERE_MODEL.vertices)/3)
     NORMALS = array.array('f', SPHERE_MODEL.normals)
@@ -53,9 +53,6 @@ class Bud(MeshDrawable):
         """
         self.ids_generator = count()
         self.bud_id = next(self.ids_generator)
-        self.radius = kwargs.pop('radius', 1)
-        self.angle = kwargs.pop('angle', 0)
-        self.height = kwargs.pop('height', 0)
 
         kwargs['colours'] = kwargs.pop('fill_colour', self.BLUE)
         if 'mesh' not in kwargs:
@@ -69,22 +66,6 @@ class Bud(MeshDrawable):
     def update_pos(self, angle, height, radius, scale):
         """Overwrite the current position with the provided values."""
         self.angle, self.height, self.radius, self.scale = angle, height, radius, scale
-
-    @staticmethod
-    def cyl_to_cart(angle, height, radius):
-        """Convert the given cylinderic point to a cartesian one."""
-        x = math.sin(angle) * radius
-        z = math.cos(angle) * radius
-        return (x, height, z)
-
-    @property
-    def offset(self):
-        """Calculate the buds offset from the meristems origin.
-
-        The bud is positioned on a simple circle on the XZ axis, so
-        simple trigonometry does the trick.
-        """
-        return self.cyl_to_cart(self.angle, self.height, self.radius)
 
     @property
     def normals(self):
@@ -108,34 +89,6 @@ class Bud(MeshDrawable):
         """Return the colour mapped to [0-255]"""
         return [max(min(int(c * 255), 255), 0) for c in self._colour]
 
-    @staticmethod
-    def norm_angle(angle):
-        """Normalize the given angle (wrapping around π)."""
-        return norm_angle(angle)
-
-    def angle2x(self, angle):
-        """Return the given angle in pseudo 2D coordinates.
-
-        In these coordinates, x is the bud's angle, while y is its height. To make calculations
-        work, the angle has to be scaled by the radius. Otherwise 2 buds with the same angle would
-        have the same x value, regardless of their radius. This would mean that there would be no way
-        to e.g. check which is wider.
-        """
-        return self.norm_angle(angle) * self.radius
-
-    def distance(self, bud):
-        """Calculate the distance between this bud and the provided one."""
-        return math.sqrt(self.angle2x(self.angle - bud.angle)**2 + (self.height - bud.height)**2)
-
-    def opposite(self, b1, b2):
-        """Check whether the given buds are on the opposite sides of this bud.
-
-        This checks to a precision of 1% of the radius.
-        """
-        angles_diff = abs(self.angle2x(b1.angle - self.angle) + self.angle2x(b2.angle - self.angle))
-        height_diff = abs(abs(b1.height + b2.height)/2 - abs(self.height))
-        return angles_diff < self.radius / 100 and height_diff < self.radius / 100
-
     def select(self):
         """Select this bud."""
         return self
@@ -157,16 +110,6 @@ class Bud(MeshDrawable):
             return t0
         else:
             return t1
-
-    def bounds_test(self, angle, h, offset):
-        """Check whether the provided point lies in this bud.
-
-        This is a 2D test, for use when a meristem is rolled out.
-        """
-        dist = self.angle2x(angle / self.radius - offset[0] - self.angle)**2 + (h - self.height)**2
-        if dist < self.scale**2:
-            return math.sqrt(dist)
-        return -1
 
 
 class Meristem(MultiDrawable):

@@ -6,6 +6,79 @@ class FrontError(ValueError):
     """Raised when a valid front can't be constructed."""
 
 
+class Sphere(object):
+    """Represent a sphere in cylindrical coords."""
+
+    def __init__(self, angle=0, height=0, radius=1, scale=3, **kwargs):
+        """
+        Initialise the sphere.
+
+        :param float angle: the angle by which the sphere is rotated around the cylinder
+        :param float height: the height of the sphere on the cylinder
+        :param float radius: the radius of the cylinder
+        :param float scale: the radius of the sphere
+        """
+        self.angle = angle
+        self.height = height
+        self.radius = radius
+        self.scale = scale
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def cyl_to_cart(angle, height, radius):
+        """Convert the given cylinderic point to a cartesian one."""
+        x = math.sin(angle) * radius
+        z = math.cos(angle) * radius
+        return (x, height, z)
+
+    @property
+    def offset(self):
+        """Calculate the buds offset from the meristems origin.
+
+        The bud is positioned on a simple circle on the XZ axis, so
+        simple trigonometry does the trick.
+        """
+        return self.cyl_to_cart(self.angle, self.height, self.radius)
+
+    @staticmethod
+    def norm_angle(angle):
+        """Normalize the given angle (wrapping around π)."""
+        return norm_angle(angle)
+
+    def angle2x(self, angle):
+        """Return the given angle in pseudo 2D coordinates.
+
+        In these coordinates, x is the bud's angle, while y is its height. To make calculations
+        work, the angle has to be scaled by the radius. Otherwise 2 buds with the same angle would
+        have the same x value, regardless of their radius. This would mean that there would be no way
+        to e.g. check which is wider.
+        """
+        return self.norm_angle(angle) * self.radius
+
+    def distance(self, bud):
+        """Calculate the distance between this bud and the provided one."""
+        return math.sqrt(self.angle2x(self.angle - bud.angle)**2 + (self.height - bud.height)**2)
+
+    def opposite(self, b1, b2):
+        """Check whether the given buds are on the opposite sides of this bud.
+
+        This checks to a precision of 1% of the radius.
+        """
+        angles_diff = abs(self.angle2x(b1.angle - self.angle) + self.angle2x(b2.angle - self.angle))
+        height_diff = abs(abs(b1.height + b2.height)/2 - abs(self.height))
+        return angles_diff < self.radius / 100 and height_diff < self.radius / 100
+
+    def bounds_test(self, angle, h, offset):
+        """Check whether the provided point lies in this bud.
+
+        This is a 2D test, for use when a meristem is rolled out.
+        """
+        dist = self.angle2x(angle / self.radius - offset[0] - self.angle)**2 + (h - self.height)**2
+        if dist < self.scale**2:
+            return math.sqrt(dist)
+        return -1
+
+
 def approx_equal(a: float, b: float, diff=0.001) -> bool:
     """Check whether the 2 values are appropriately equal."""
     return abs(a - b) < diff
@@ -90,7 +163,7 @@ def in_cone_checker(tip, dir_vec, r, h):
     return in_cone
 
 
-def first_gap(circles: List[Tuple[float, float, float]], radius: float) -> Tuple[float, float]:
+def first_gap(circles: List[Sphere], radius: float) -> Tuple[float, float]:
     """
     Return the first available gap that will fit a circle of the given radius.
 
@@ -98,12 +171,12 @@ def first_gap(circles: List[Tuple[float, float, float]], radius: float) -> Tuple
     2 circles is larger than 2*radius it deems that it's found a hole and returns the (x,y) that lies
     between the 2 circles.
     """
-    circles = sorted(circles, key=lambda x: x[0], reverse=True)
+    circles = sorted(circles, key=lambda c: c.angle, reverse=True)
 
     for c1, c2 in zip(circles, circles[1:] + [circles[0]]):
-        dist = abs(norm_angle(c1[0] - c2[0]))
-        if c1[2] + c2[2] + 2*radius < dist:
-            return norm_angle(c1[0] - dist/2), 0
+        dist = abs(norm_angle(c1.angle - c2.angle))
+        if c1.scale + c2.scale + 2*radius < dist:
+            return norm_angle(c1.angle - dist/2), 0
 
 
 def flat_circle_overlap(
@@ -119,18 +192,17 @@ def flat_circle_overlap(
     return norm_angle(x3), max(y1 + y3, y1 - y3)
 
 
-def are_intersecting(c1: Tuple, c2: Tuple) -> bool:
+def are_intersecting(c1: Sphere, c2: Sphere) -> bool:
     """Check whether the 2 provided circles intersect,"""
-    return cylin_distance(c1, c2) < c1[2] + c2[2] - 0.0000001
+    return c1.distance(c2) < c1.scale + c2.scale - 0.0000001
 
 
-def check_collisions(circle: Tuple[float, float, float], to_check: List[Tuple]) -> bool:
+def check_collisions(circle: Sphere, to_check: List[Sphere]) -> bool:
     """Check whether the given circle overlaps with any in the provided list."""
     return any(are_intersecting(circle, c) for c in to_check)
 
 
-def closest_circle(
-        b1: Tuple[float, float, float], b2: Tuple[float, float, float], radius: float) -> Tuple[float, float]:
+def closest_circle(b1: Sphere, b2: Sphere, radius: float) -> Sphere:
     """
     Return the angle and height of a bud with the given radius as close a possible to the given buds.
 
@@ -146,14 +218,14 @@ def closest_circle(
     This can be reduced to the intersection of 2 circles at b1 and b2, with radiuses of
     b1,radius + radius and b2.radius + radius
     """
-    x1, y1, r1 = b1
-    x2, y2, r2 = b2
+    x1, y1, r1 = b1.angle, b1.height, b1.scale
+    x2, y2, r2 = b2.angle, b2.height, b2.scale
 
     n_b1 = r1 + radius
     n_b2 = r2 + radius
 
     # the dist between the 2 buds should be r1 + r2, but do it manually just in case
-    b1_b2 = cylin_distance(b1, b2)
+    b1_b2 = b1.distance(b2)
 
     # check if the circles are in the same place
     if approx_equal(b1_b2, 0):
@@ -175,23 +247,23 @@ def closest_circle(
     y3_2 = midy + h*norm_angle(x2 - x1)/b1_b2
 
     if y3_1 > y3_2:
-        return norm_angle(x3_1), y3_1, radius
-    return norm_angle(x3_2), y3_2, radius
+        return Sphere(norm_angle(x3_1), y3_1, scale=radius)
+    return Sphere(norm_angle(x3_2), y3_2, scale=radius)
 
 
-def highest_left(circles, checked: Tuple[float, float, float]) -> Tuple[float, float, float]:
+def highest_left(circles: List[Sphere], checked: Sphere) -> Sphere:
     for c in circles:
-        if norm_angle(c[0] - checked[0]) > 0:
+        if norm_angle(c.angle - checked.angle) > 0:
             return c
     raise FrontError
 
 
-def touching(circle: Tuple[float, float, float], circles: Iterable[Tuple]) -> List[Tuple]:
+def touching(circle: Sphere, circles: Iterable[Sphere]) -> List[Sphere]:
     """Return all circles that are touching the provided one."""
-    return [c for c in circles if cylin_distance(c, circle) < c[2] + circle[2] + 0.1 and c != circle]
+    return [c for c in circles if circle.distance(c) < c.scale + circle.scale + 0.1 and c != circle]
 
 
-def front(circles: List[Tuple[float, float, float]]) -> List[Tuple[float, float, float]]:
+def front(circles: List[Sphere]) -> List[Sphere]:
     """
     Given a list of circles, return their current front.
 
@@ -207,7 +279,7 @@ def front(circles: List[Tuple[float, float, float]]) -> List[Tuple[float, float,
         return []
 
     # sort the circles by height
-    circles = sorted(circles, key=lambda c: c[1], reverse=True)
+    circles = sorted(circles, key=lambda c: c.height, reverse=True)
 
     highest = circles[0]
 
@@ -225,7 +297,7 @@ def front(circles: List[Tuple[float, float, float]]) -> List[Tuple[float, float,
         return None
 
 
-def cycle_ring(ring: List[Tuple], n: int) -> List[Tuple]:
+def cycle_ring(ring: List[Sphere], n: int) -> List[Sphere]:
     """
     Rotate the given ring of circles by n circles.
 
@@ -234,11 +306,11 @@ def cycle_ring(ring: List[Tuple], n: int) -> List[Tuple]:
     if n > 1:
         ring = cycle_ring(ring, n - 1)
 
-    lastx, lasty, lastr = ring[-1]
+    last = ring[-1]
     first = ring[0]
 
-    if abs(lastx - first[0]) > math.pi:
-        first = [lastx - 2 * math.pi, lasty, lastr]
+    if abs(last.angle - first.angle) > math.pi:
+        first = Sphere(last.angle - 2 * math.pi, last.height, scale=last.scale)
     else:
-        first = [lastx, lasty, lastr]
+        first = last
     return [first] + ring[:-1]
