@@ -20,6 +20,23 @@ class FlatStem(MeristemDisplay, QGraphicsView):
         pen.setWidth(0)
         return pen
 
+    def shadow_if_needed(self, bud):
+        """Check if the bud crosses over the side bars, and if so draw a shadow bud on the opposite side."""
+        angle = bud.angle2x(bud.angle + math.radians(self.viewing_angle[0]))
+        if abs(angle) < math.pi * bud.radius - bud.scale:
+            return
+
+        if angle > 0:
+            angle = angle - bud.scale - 2 * math.pi * bud.radius
+        else:
+            angle = angle - bud.scale + 2 * math.pi * bud.radius
+
+        return self.scene.addEllipse(
+            angle, -bud.height - bud.scale,
+            bud.scale * 2, bud.scale * 2,
+            self.thin_line(), QBrush(qtpy.QtGui.QColor(*(bud.html_colour + [100])))
+        )
+
     def make_item(self, bud):
         """Add the given bud to the scene as a ball."""
         item = self.scene.addEllipse(
@@ -61,6 +78,7 @@ class FlatStem(MeristemDisplay, QGraphicsView):
         # Draw all buds
         for bud in self.displayables:
             self.make_item(bud)
+            self.shadow_if_needed(bud)
 
         self.draw_side_bars()
 
